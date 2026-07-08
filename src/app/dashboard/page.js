@@ -1,0 +1,651 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { authService } from "@/lib/auth-service";
+import { dbService } from "@/lib/db-service";
+import { 
+  Plus, 
+  LogOut, 
+  Trash2, 
+  Edit3, 
+  Eye, 
+  FileText, 
+  FolderPlus, 
+  FileDown, 
+  Calendar, 
+  X,
+  ShoppingBag,
+  Sparkles,
+  ArrowRight,
+  Info,
+  Search,
+  Filter,
+  ArrowUpRight,
+  BarChart3,
+  Layers
+} from "lucide-react";
+import Link from "next/link";
+import FlowbeeLoader from "@/components/FlowbeeLoader";
+
+function TemplateCardPreview({ template }) {
+  const [htmlContent, setHtmlContent] = useState("");
+  const [scale, setScale] = useState(0.3);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.clientWidth;
+        const targetWidth = 794;
+        setScale(width / targetWidth);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    const timeoutId = setTimeout(handleResize, 100);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const mockCamp = {
+      companyName: "Hypermarket",
+      campaignTitle: "Weekly Offers",
+      offerStartDate: new Date().toISOString().split("T")[0],
+      offerEndDate: new Date(Date.now() + 3*24*60*60*1000).toISOString().split("T")[0],
+      logoUrl: "https://flowbee.io/images/logo.png",
+      footerAddress: "Muscat, Sultanate of Oman",
+      phone: "+968 9000 0000",
+      whatsapp: "+968 9000 0000",
+      terms: "Offers valid until stock lasts.",
+      templateId: template.id,
+      themeColor: template.themeColor || "#dc2626"
+    };
+
+    const mockProds = [
+      { id: "1", productName: "Fresh Red Apples", quantity: "1 Bag (Approx 1 Kg)", oldPrice: 1.200, offerPrice: 0.790, imageUrl: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=150", sortOrder: 0 },
+      { id: "2", productName: "Cooking Oil Blend", quantity: "1.5 Litres Bottle", oldPrice: 2.100, offerPrice: 1.490, imageUrl: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=150", sortOrder: 1 },
+      { id: "3", productName: "Long Grain Rice", quantity: "5 Kg Value Bag", oldPrice: 4.800, offerPrice: 3.490, imageUrl: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=150", sortOrder: 2 },
+      { id: "4", productName: "Fresh Orange Juice", quantity: "1 Litre Carafe", oldPrice: 0.950, offerPrice: 0.650, imageUrl: "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=150", sortOrder: 3 }
+    ];
+
+    import("@/lib/pdf-template").then(({ generateBrochureHtml }) => {
+      const html = generateBrochureHtml(mockCamp, mockProds);
+      setHtmlContent(html);
+    });
+  }, [template]);
+
+  if (!htmlContent) {
+    return (
+      <div className="w-full h-full bg-slate-50 animate-pulse flex items-center justify-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+        loading preview...
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      ref={containerRef}
+      className="w-full h-full bg-white overflow-hidden relative select-none pointer-events-none"
+    >
+      <iframe
+        srcDoc={htmlContent}
+        style={{
+          width: "794px",
+          height: "1123px",
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          border: "none",
+          overflow: "hidden",
+          position: "absolute",
+          top: 0,
+          left: 0
+        }}
+        title={`template-card-${template.id}`}
+        sandbox="allow-same-origin"
+      />
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  
+  // Search & Filter State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Authenticate user
+  useEffect(() => {
+    const unsubscribe = authService.subscribeToAuthChanges((currentUser) => {
+      setAuthChecking(false);
+      if (!currentUser) {
+        router.push("/login");
+      } else {
+        setUser(currentUser);
+        loadCampaigns(currentUser.uid);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  const loadCampaigns = async (userId) => {
+    try {
+      const [data, tpls] = await Promise.all([
+        dbService.getCampaigns(userId),
+        dbService.getTemplates()
+      ]);
+      setCampaigns(data);
+      setTemplates(tpls.filter(t => t.status === "active"));
+    } catch (error) {
+      console.error("Failed to load campaigns:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  const handleDelete = async (campaignId) => {
+    if (!confirm("Are you sure you want to delete this campaign? All products inside will be permanently deleted.")) {
+      return;
+    }
+    
+    setDeletingId(campaignId);
+    try {
+      await dbService.deleteCampaign(campaignId);
+      setCampaigns(campaigns.filter(c => c.id !== campaignId));
+    } catch (error) {
+      console.error("Failed to delete campaign:", error);
+      alert("Failed to delete campaign");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDownloadPdf = async (campaign) => {
+    setDownloadingId(campaign.id);
+    try {
+      const products = await dbService.getProducts(campaign.id);
+      
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          campaign,
+          products,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${campaign.campaignTitle.toLowerCase().replace(/\s+/g, "-")}-brochure.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("PDF download failed:", error);
+      alert("Failed to generate and download PDF. Ensure the server is running and puppeteer is installed.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  // Filter campaigns list based on Search & Status Filters
+  const filteredCampaigns = campaigns.filter(campaign => {
+    const matchesSearch = 
+      campaign.campaignTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (campaign.companyName && campaign.companyName.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = 
+      statusFilter === "all" ? true : campaign.status === statusFilter;
+      
+    return matchesSearch && matchesStatus;
+  });
+
+  if (authChecking || loading) {
+    return <FlowbeeLoader />;
+  }
+
+  // Statistics
+  const totalCampaigns = campaigns.length;
+  const completedCampaigns = campaigns.filter(c => c.status === "completed").length;
+  const draftCampaigns = campaigns.filter(c => c.status === "draft").length;
+
+  return (
+    <div className="min-h-screen bg-[#fafafb] text-[#1e293b] font-sans selection:bg-[#f97316] selection:text-white flex flex-col justify-between">
+      
+      {/* Top Header Navbar matching Homepage */}
+      <nav className="fixed top-0 left-0 right-0 w-full px-6 sm:px-12 z-40 bg-white/90 border-b border-slate-200/60 backdrop-blur-md shadow-xs py-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <Link href="/">
+            <img 
+              src="https://flowbee.io/images/logo.png" 
+              alt="flowbee logo" 
+              className="h-4.5 w-auto object-contain" 
+            />
+          </Link>
+        </div>
+
+        {/* Center Navigation Links */}
+        <div className="absolute left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-8">
+          <Link 
+            href="/#templates" 
+            className="text-[10px] font-bold tracking-widest text-slate-450 hover:text-slate-900 transition duration-200 uppercase"
+          >
+            TEMPLATES
+          </Link>
+          <Link 
+            href="/dashboard" 
+            className="text-[10px] font-bold tracking-widest text-slate-900 transition duration-200 uppercase"
+          >
+            WORKSPACE
+          </Link>
+        </div>
+
+        {/* Right User Actions profile */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setProfileOpen(true)}
+            className="h-9 w-9 rounded-full bg-slate-950 hover:bg-slate-800 text-white flex items-center justify-center font-bold text-xs border border-slate-200/50 shadow-sm transition duration-200 cursor-pointer"
+            title={user?.email || "Profile"}
+          >
+            <span>{user?.email ? user.email[0].toUpperCase() : "U"}</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Page Content */}
+      <main className="max-w-7xl w-full mx-auto px-6 sm:px-12 pt-28 pb-16 flex-grow">
+        
+        {/* Welcome Section Banner */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-200/60 rounded-3xl p-6 md:p-8 shadow-xs relative overflow-hidden">
+          {/* Subtle decoration background grids */}
+          <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial-gradient from-orange-500/5 to-transparent pointer-events-none" />
+          
+          <div className="text-left space-y-1">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 lowercase">
+              hello, {user?.email ? user.email.split('@')[0] : "creator"}
+            </h1>
+            <p className="text-slate-500 text-xs font-medium leading-relaxed max-w-xl">
+              Welcome back to your campaign workspace. All templates are ready. You have generated {completedCampaigns} print-ready catalog files.
+            </p>
+          </div>
+
+          <div className="flex shrink-0">
+            <Link 
+              href="/campaigns/new"
+              className="inline-flex items-center gap-1.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-sm transition hover:scale-[1.01]"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Campaign</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Analytics Dashboard Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          
+          {/* Card 1: Total campaigns */}
+          <div className="bg-white border border-slate-200/60 rounded-3xl p-6 flex items-center justify-between shadow-xs hover:shadow-sm transition">
+            <div className="space-y-1">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Active Campaigns</p>
+              <h3 className="text-3xl font-bold text-slate-900">{totalCampaigns}</h3>
+              <p className="text-[10px] text-slate-450 font-medium">Total registered files</p>
+            </div>
+            <div className="p-3.5 bg-orange-50 rounded-2xl border border-orange-100/50 text-[#f97316]">
+              <FolderPlus className="h-5 w-5" />
+            </div>
+          </div>
+
+          {/* Card 2: Drafts */}
+          <div className="bg-white border border-slate-200/60 rounded-3xl p-6 flex items-center justify-between shadow-xs hover:shadow-sm transition">
+            <div className="space-y-1">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Pending Drafts</p>
+              <h3 className="text-3xl font-bold text-amber-600">{draftCampaigns}</h3>
+              <p className="text-[10px] text-slate-450 font-medium">Work in progress</p>
+            </div>
+            <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-100/50 text-amber-500">
+              <FileText className="h-5 w-5" />
+            </div>
+          </div>
+
+          {/* Card 3: Completed */}
+          <div className="bg-white border border-slate-200/60 rounded-3xl p-6 flex items-center justify-between shadow-xs hover:shadow-sm transition">
+            <div className="space-y-1">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Exported PDFs</p>
+              <h3 className="text-3xl font-bold text-emerald-600">{completedCampaigns}</h3>
+              <p className="text-[10px] text-slate-450 font-medium">Ready flyer catalogs</p>
+            </div>
+            <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100/50 text-emerald-500">
+              <ShoppingBag className="h-5 w-5" />
+            </div>
+          </div>
+
+        </div>
+
+        {/* Campaigns Section - Full Width */}
+        <div className="space-y-6 mb-14">
+            
+          {/* List Header, Search & Filter Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+            <h2 className="text-lg font-bold tracking-tight text-slate-900">Your Campaigns</h2>
+              
+            {/* Search and filter inputs */}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search campaigns..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#f97316] w-48 transition"
+                />
+              </div>
+                
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="pl-3 pr-8 py-2 border border-slate-200 rounded-xl text-xs bg-white text-slate-800 focus:outline-none focus:border-[#f97316] appearance-none cursor-pointer font-semibold transition"
+                >
+                  <option value="all">All status</option>
+                  <option value="completed">Completed</option>
+                  <option value="draft">Drafts</option>
+                </select>
+                <Filter className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Campaign Cards list */}
+          {filteredCampaigns.length === 0 ? (
+            <div className="bg-white border border-slate-200/60 rounded-3xl p-16 text-center flex flex-col items-center justify-center shadow-xs">
+              <FileText className="h-10 w-10 text-slate-300 mb-3" />
+              <h3 className="font-bold text-base text-slate-800">No campaigns found</h3>
+              <p className="text-slate-450 text-xs max-w-xs mt-1 leading-relaxed">
+                {searchTerm || statusFilter !== "all" 
+                  ? "No files match your search criteria. Try updating filters." 
+                  : "You haven't created any campaigns yet. Pick a template below to start!"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredCampaigns.map((campaign) => (
+                <div 
+                  key={campaign.id}
+                  className="bg-white border border-slate-200/60 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xs hover:translate-y-[-1px] hover:shadow-sm transition duration-200"
+                >
+                  {/* Left: Mock Thumbnail illustration & metadata details */}
+                  <div className="flex items-center gap-4">
+                    {/* Mini Mock brochure illustration */}
+                    <div className="hidden xs:flex h-16 w-12 rounded-lg border border-slate-200 bg-slate-50 p-1 flex-col justify-between shrink-0 select-none">
+                      <div className="h-1 w-full bg-[#f97316]/30 rounded-xs" />
+                      <div className="grid grid-cols-2 gap-0.5">
+                        <div className="h-5 bg-slate-200/80 rounded-xs" />
+                        <div className="h-5 bg-slate-200/80 rounded-xs" />
+                        <div className="h-5 bg-slate-200/80 rounded-xs" />
+                        <div className="h-5 bg-slate-200/80 rounded-xs" />
+                      </div>
+                      <div className="h-1 w-2/3 bg-slate-300/40 rounded-xs self-start" />
+                    </div>
+
+                    <div className="space-y-1 text-left">
+                      <div className="flex items-center flex-wrap gap-2">
+                        <span className="font-bold text-slate-900 text-sm">{campaign.campaignTitle}</span>
+                        <span className={`text-[8px] font-bold px-2 py-0.5 rounded-full border tracking-wide uppercase ${
+                          campaign.status === "completed" 
+                            ? "bg-emerald-50 border-emerald-100 text-emerald-600" 
+                            : "bg-amber-50 border-amber-100 text-amber-600"
+                        }`}>
+                          {campaign.status === "completed" ? "Completed" : "Draft"}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{campaign.companyName || "ABC Super Market"}</p>
+                        
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium pt-0.5">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <span>
+                          {campaign.offerStartDate && new Date(campaign.offerStartDate).toLocaleDateString()} - {campaign.offerEndDate && new Date(campaign.offerEndDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Quick actions buttons */}
+                  <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 sm:border-t-0 sm:pt-0 justify-end">
+                    <Link 
+                      href={`/preview/${campaign.id}`}
+                      target="_blank"
+                      className="flex items-center gap-1 bg-slate-50 border border-slate-200 hover:border-slate-350 hover:bg-slate-100 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Preview</span>
+                    </Link>
+
+                    <Link 
+                      href={`/campaigns/new?id=${campaign.id}`}
+                      className="flex items-center gap-1 bg-slate-50 border border-slate-200 hover:border-slate-350 hover:bg-slate-100 px-3.5 py-2 rounded-xl text-xs font-bold text-blue-600 hover:text-blue-700 transition"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                      <span>Edit</span>
+                    </Link>
+
+                    <button
+                      onClick={() => handleDownloadPdf(campaign)}
+                      disabled={downloadingId === campaign.id}
+                      className="flex items-center gap-1.5 bg-[#f97316] hover:bg-[#ea580c] px-4 py-2 rounded-xl text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-xs"
+                    >
+                      {downloadingId === campaign.id ? (
+                        <>
+                          <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full h-3.5 w-3.5"></span>
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileDown className="h-3.5 w-3.5" />
+                          <span>Download PDF</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(campaign.id)}
+                      disabled={deletingId === campaign.id}
+                      className="flex items-center justify-center p-2 bg-slate-50 border border-slate-200 hover:border-red-200 hover:text-red-500 rounded-xl transition text-slate-400 cursor-pointer"
+                      title="Delete Campaign"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Available Templates - Full Width Grid */}
+        <div className="space-y-6 text-left">
+          <h2 className="text-lg font-bold tracking-tight text-slate-900">Available Templates</h2>
+            
+          {templates.length === 0 ? (
+            <div className="bg-white border border-slate-200/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center shadow-xs">
+              <Layers className="h-8 w-8 text-slate-300 mb-2" />
+              <p className="text-slate-400 text-xs font-bold">No templates available yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates.map((template) => (
+                <div key={template.id} className="group rounded-2xl overflow-hidden bg-white border border-slate-200/60 hover:shadow-md transition duration-200 shadow-xs flex flex-col justify-between">
+                  {/* Top Preview */}
+                  <div className="h-56 relative w-full overflow-hidden shrink-0 border-b border-slate-100">
+                    <TemplateCardPreview template={template} />
+                    <span className="absolute top-3 left-3 text-white font-extrabold text-[9px] uppercase tracking-widest bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded shadow-xs z-20">
+                      {template.type === 'offer_brochure' ? 'Offer Brochure' : template.type}
+                    </span>
+                    <div className="absolute top-3 right-3 text-[8px] font-bold text-white bg-emerald-500/90 px-2 py-0.5 rounded shadow-xs z-20 uppercase tracking-wide">
+                      A4 Layout
+                    </div>
+                  </div>
+                  {/* Bottom Details */}
+                  <div className="p-4 flex flex-col justify-between grow">
+                    <div>
+                      <h3 className="font-bold text-sm text-slate-900">{template.name}</h3>
+                      <p className="text-[11px] text-slate-500 mt-1 leading-relaxed font-medium line-clamp-2">
+                        {template.description}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                      <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                        <Layers className="h-3.5 w-3.5" />
+                        <span>{template.productsPerPage || 8} products</span>
+                      </div>
+                      <Link
+                        href={`/campaigns/new?templateId=${template.id}`}
+                        className="flex items-center gap-0.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-[10px] px-3.5 py-1.5 rounded-xl transition"
+                      >
+                        <span>Use layout</span>
+                        <ArrowUpRight className="h-3 w-3" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* User profile detail dropdown modal right drawer */}
+      {user && (
+        <div className={`fixed inset-0 z-50 transition-all duration-300 ${profileOpen ? "visible" : "invisible"}`}>
+          {/* Backdrop overlay */}
+          <div 
+            className={`fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-300 ${
+              profileOpen ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={() => setProfileOpen(false)}
+          />
+          {/* Drawer Panel */}
+          <div className={`fixed right-0 top-0 h-full w-96 max-w-full bg-white border-l border-slate-200 shadow-2xl z-55 p-6 flex flex-col justify-between transform transition-transform duration-300 ${
+            profileOpen ? "translate-x-0" : "translate-x-full"
+          }`}>
+            <div>
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                <h3 className="font-bold text-slate-855 text-[10px] tracking-widest uppercase">User Details</h3>
+                <button 
+                  onClick={() => setProfileOpen(false)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              {/* Info details */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-slate-950 text-white flex items-center justify-center font-bold text-base border border-slate-200 shadow-sm">
+                    {user.email ? user.email[0].toUpperCase() : "U"}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Logged In As</p>
+                    <p className="text-xs font-bold text-slate-900 truncate max-w-[180px]">{user.email}</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3 text-left">
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Account Role</p>
+                    <p className="text-xs font-bold text-slate-800 uppercase mt-0.5 tracking-wide">
+                      {user.role || "User"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">User ID</p>
+                    <p className="text-[9px] font-mono text-slate-500 mt-0.5 truncate">{user.uid}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action panel */}
+            <div className="space-y-3">
+              <Link 
+                href="/dashboard"
+                className="flex items-center justify-center gap-1.5 w-full bg-[#111111] hover:bg-slate-800 text-white py-3 rounded-xl text-xs font-bold transition duration-200"
+                onClick={() => setProfileOpen(false)}
+              >
+                <span>Go to Workspace</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              
+              {user.role === "admin" && (
+                <Link 
+                  href="/admin/templates"
+                  className="flex items-center justify-center gap-1.5 w-full bg-slate-100 hover:bg-slate-200 text-slate-800 py-3 rounded-xl text-xs font-bold transition duration-200"
+                  onClick={() => setProfileOpen(false)}
+                >
+                  <span>Admin Settings</span>
+                </Link>
+              )}
+
+              <button
+                onClick={async () => {
+                  setProfileOpen(false);
+                  await handleLogout();
+                }}
+                className="flex items-center justify-center gap-1.5 w-full border border-slate-200 hover:bg-red-50 hover:border-red-200 text-slate-700 hover:text-red-600 py-3 rounded-xl text-xs font-bold transition duration-200 cursor-pointer"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer Section */}
+      <footer className="bg-slate-50 border-t border-slate-200/80 w-full py-12">
+        <div className="max-w-7xl mx-auto px-6 sm:px-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium">
+          <p>© 2026 flowbee. striking concepts in brochure layout design.</p>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-slate-650 transition">Terms of Service</a>
+            <a href="#" className="hover:text-slate-650 transition">Privacy Policy</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

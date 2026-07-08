@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import puppeteer from "puppeteer";
 import { generateBrochureHtml } from "@/lib/pdf-template";
 
 export async function POST(request) {
@@ -14,16 +13,36 @@ export async function POST(request) {
     // Generate the raw flyer HTML
     const htmlContent = generateBrochureHtml(campaign, products);
 
-    // Launch headless Chromium via Puppeteer
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-web-security"
-      ]
-    });
+    // Launch browser dynamically based on the environment (Vercel vs Local)
+    let browser;
+    const isVercel = !!process.env.VERCEL;
+
+    if (isVercel) {
+      const chromium = (await import("@sparticuz/chromium-min")).default;
+      const puppeteer = (await import("puppeteer-core")).default;
+
+      const executablePath = await chromium.executablePath(
+        "https://github.com/Sparticuz/chromium/releases/download/v147.0.0/chromium-v147.0.0-pack.tar"
+      );
+
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: executablePath,
+        headless: chromium.headless,
+      });
+    } else {
+      const puppeteer = (await import("puppeteer")).default;
+      browser = await puppeteer.launch({
+        headless: "new",
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-web-security"
+        ]
+      });
+    }
 
     const page = await browser.newPage();
 

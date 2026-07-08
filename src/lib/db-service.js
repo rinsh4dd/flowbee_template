@@ -49,19 +49,16 @@ export const dbService = {
   async getCampaigns(userId) {
     return runFirestore(
       async () => {
-        const q = query(
-          collection(db, "campaigns"), 
-          where("customerId", "==", userId)
-        );
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(collection(db, "campaigns"));
         return snapshot.docs
           .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(c => c.customerId === userId || c.userId === userId)
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       },
       async () => {
         const local = getLocalData("flowbee_campaigns");
         return local
-          .filter(c => c.customerId === userId)
+          .filter(c => c.customerId === userId || c.userId === userId)
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       }
     );
@@ -96,14 +93,14 @@ export const dbService = {
       async () => {
         const docRef = doc(db, "campaigns", id);
         await setDoc(docRef, newCampaign);
-        return { id, ...newCampaign };
+        return id;
       },
       async () => {
         const local = getLocalData("flowbee_campaigns");
         const created = { id, ...newCampaign };
         local.push(created);
         setLocalData("flowbee_campaigns", local);
-        return created;
+        return id;
       }
     );
   },
@@ -180,6 +177,10 @@ export const dbService = {
           .sort((a, b) => a.sortOrder - b.sortOrder);
       }
     );
+  },
+
+  async updateProducts(campaignId, productsList) {
+    return this.saveProducts(campaignId, productsList);
   },
 
   async saveProducts(campaignId, productsList) {

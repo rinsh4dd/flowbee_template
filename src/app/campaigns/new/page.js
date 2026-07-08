@@ -130,15 +130,20 @@ function CampaignEditor() {
     if (!user) return;
     setSaving(true);
     try {
-      const campaignData = { ...campaign, status, userId: user.uid };
+      const campaignData = {
+        ...campaign,
+        status,
+        userId: user.uid,
+        customerId: user.uid,
+      };
       
       if (campaignId) {
         await dbService.updateCampaign(campaignId, campaignData);
-        await dbService.updateProducts(campaignId, products);
+        await dbService.saveProducts(campaignId, products);
       } else {
         const newId = await dbService.createCampaign(campaignData);
         if (products.length > 0) {
-          await dbService.updateProducts(newId, products);
+          await dbService.saveProducts(newId, products);
         }
         router.push(`/campaigns/new?id=${newId}`);
       }

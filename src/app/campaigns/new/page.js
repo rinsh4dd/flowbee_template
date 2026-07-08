@@ -32,6 +32,12 @@ function CampaignEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [toast, setToast] = useState({ message: "", visible: false });
+
+  const triggerToast = (message) => {
+    setToast({ message, visible: true });
+    window.setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 1600);
+  };
   
   // Tab states
   const [activeTab, setActiveTab] = useState("header"); // header, products, footer
@@ -41,6 +47,9 @@ function CampaignEditor() {
   const [campaign, setCampaign] = useState({
     companyName: "",
     campaignTitle: "",
+    headerTitle: "",
+    headerSubtitle: "",
+    headerBadgeText: "",
     offerStartDate: "",
     offerEndDate: "",
     logoUrl: "",
@@ -51,7 +60,14 @@ function CampaignEditor() {
     terms: "",
     templateId: "hypermarket_offer",
     themeColor: "#facc15",
+    headerBgColor: "#dc2626",
+    accentColor: "#facc15",
+    footerBgColor: "#1e293b",
+    textColor: "#1f2937",
     currency: "INR",
+    productsPerPage: 8,
+    productsPerPageSubsequent: 10,
+    layoutOrder: ["header", "products", "footer"],
     status: "draft"
   });
 
@@ -76,8 +92,15 @@ function CampaignEditor() {
               ...prev,
               templateId: selectedTemplateId,
               themeColor: selectedTemplate?.themeColor || "#facc15",
+              headerBgColor: selectedTemplate?.themeColor || "#dc2626",
+              accentColor: "#facc15",
+              footerBgColor: "#1e293b",
+              textColor: "#1f2937",
               companyName: "ABC SUPERMARKET",
               campaignTitle: "Weekend Offer",
+              headerTitle: "Weekend Offer",
+              headerSubtitle: "Special deals for this week",
+              headerBadgeText: "Valid this week",
               offerStartDate: new Date().toISOString().split("T")[0],
               offerEndDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
               footerAddress: "Opp. Grand Mall, Al Khuwair, Muscat, Oman",
@@ -145,11 +168,14 @@ function CampaignEditor() {
         if (products.length > 0) {
           await dbService.saveProducts(newId, products);
         }
-        router.push(`/campaigns/new?id=${newId}`);
+        if (status !== "completed") {
+          router.push(`/campaigns/new?id=${newId}`);
+        }
       }
       
       if (status === "completed") {
-        router.push("/dashboard");
+        triggerToast("ok");
+        window.setTimeout(() => router.push("/dashboard"), 1200);
       }
     } catch (error) {
       console.error("Failed to save campaign:", error);
@@ -197,6 +223,11 @@ function CampaignEditor() {
 
   return (
     <div className="min-h-screen bg-[#fafafb] text-[#1e293b] font-sans flex flex-col selection:bg-[#f97316] selection:text-white">
+      {toast.visible && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-slate-950/95 border border-slate-200/10 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-md">
+          {toast.message}
+        </div>
+      )}
       {/* Editor Header */}
       <header className="border-b border-slate-200/60 bg-white/90 backdrop-blur-md px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-50 shadow-xs">
         <div className="flex items-center gap-3">
@@ -321,7 +352,17 @@ function CampaignEditor() {
           <div className="grow space-y-6">
             {activeTab === "header" && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-3xl border border-slate-200/80 bg-linear-to-br from-white via-slate-50 to-white p-4 sm:p-5 shadow-[0_10px_30px_-15px_rgba(15,23,42,0.2)]">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">Branding</p>
+                      <h3 className="mt-1 text-sm font-semibold text-slate-800">Header and brochure identity</h3>
+                    </div>
+                    <div className="rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-[10px] font-semibold text-orange-600">
+                      Modern layout
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Company / Store Name</label>
                     <input
@@ -331,17 +372,95 @@ function CampaignEditor() {
                       placeholder="e.g. Hypermarket LLC"
                       className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
                     />
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                      <input
+                        type="color"
+                        value={campaign.companyColor || campaign.textColor || "#1f2937"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, companyColor: e.target.value }))}
+                        className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.companyColor || campaign.textColor || "#1f2937"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, companyColor: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700"
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Campaign Offer Title</label>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Title</label>
                     <input
                       type="text"
-                      value={campaign.campaignTitle}
-                      onChange={(e) => setCampaign(prev => ({ ...prev, campaignTitle: e.target.value }))}
-                      placeholder="e.g. Weekend Special Offers"
+                      value={campaign.headerTitle || campaign.campaignTitle}
+                      onChange={(e) => setCampaign(prev => ({ ...prev, headerTitle: e.target.value }))}
+                      placeholder="e.g. Super Savings"
                       className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
                     />
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                      <input
+                        type="color"
+                        value={campaign.headerTitleColor || campaign.themeColor || "#dc2626"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, headerTitleColor: e.target.value }))}
+                        className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.headerTitleColor || campaign.themeColor || "#dc2626"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, headerTitleColor: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Subtitle</label>
+                    <input
+                      type="text"
+                      value={campaign.headerSubtitle || ""}
+                      onChange={(e) => setCampaign(prev => ({ ...prev, headerSubtitle: e.target.value }))}
+                      placeholder="e.g. Limited time offers"
+                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                    />
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                      <input
+                        type="color"
+                        value={campaign.headerSubtitleColor || campaign.accentColor || "#facc15"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, headerSubtitleColor: e.target.value }))}
+                        className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.headerSubtitleColor || campaign.accentColor || "#facc15"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, headerSubtitleColor: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Badge</label>
+                    <input
+                      type="text"
+                      value={campaign.headerBadgeText || ""}
+                      onChange={(e) => setCampaign(prev => ({ ...prev, headerBadgeText: e.target.value }))}
+                      placeholder="e.g. Valid till stock lasts"
+                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                    />
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                      <input
+                        type="color"
+                        value={campaign.headerBadgeColor || campaign.accentColor || "#facc15"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, headerBadgeColor: e.target.value }))}
+                        className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.headerBadgeColor || campaign.accentColor || "#facc15"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, headerBadgeColor: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -370,14 +489,109 @@ function CampaignEditor() {
                       <input
                         type="color"
                         value={campaign.themeColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, themeColor: e.target.value }))}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, themeColor: e.target.value, headerBgColor: e.target.value }))}
                         className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
                       />
                       <input
                         type="text"
                         value={campaign.themeColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, themeColor: e.target.value }))}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, themeColor: e.target.value, headerBgColor: e.target.value }))}
                         placeholder="#facc15"
+                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Accent Color</label>
+                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
+                      <input
+                        type="color"
+                        value={campaign.accentColor || "#facc15"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, accentColor: e.target.value }))}
+                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.accentColor || "#facc15"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, accentColor: e.target.value }))}
+                        placeholder="#facc15"
+                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Background</label>
+                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
+                      <input
+                        type="color"
+                        value={campaign.headerBgColor || campaign.themeColor || "#dc2626"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, headerBgColor: e.target.value }))}
+                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.headerBgColor || campaign.themeColor || "#dc2626"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, headerBgColor: e.target.value }))}
+                        placeholder="#dc2626"
+                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Footer Background</label>
+                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
+                      <input
+                        type="color"
+                        value={campaign.footerBgColor || "#1e293b"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, footerBgColor: e.target.value }))}
+                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.footerBgColor || "#1e293b"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, footerBgColor: e.target.value }))}
+                        placeholder="#1e293b"
+                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Text Color</label>
+                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
+                      <input
+                        type="color"
+                        value={campaign.textColor || "#1f2937"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, textColor: e.target.value }))}
+                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.textColor || "#1f2937"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, textColor: e.target.value }))}
+                        placeholder="#1f2937"
+                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Price Color</label>
+                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
+                      <input
+                        type="color"
+                        value={campaign.priceColor || campaign.themeColor || "#dc2626"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, priceColor: e.target.value }))}
+                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={campaign.priceColor || campaign.themeColor || "#dc2626"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, priceColor: e.target.value }))}
+                        placeholder="#dc2626"
                         className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
                       />
                     </div>
@@ -427,6 +641,7 @@ function CampaignEditor() {
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
               </div>
             )}

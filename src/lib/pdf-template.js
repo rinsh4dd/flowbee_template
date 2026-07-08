@@ -61,25 +61,29 @@ function renderHeader(campaign, pageNumber, totalPages) {
   const isFirstPage = pageNumber === 1;
   const logoSrc = campaign.logoUrl || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=200";
 
-  if (isFirstPage) {
-    const start = campaign.offerStartDate
-      ? new Date(campaign.offerStartDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
-      : "";
-    const end = campaign.offerEndDate
-      ? new Date(campaign.offerEndDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
-      : "";
-    const validity = start && end ? `VALID FROM ${start.toUpperCase()} TO ${end.toUpperCase()}` : "SPECIAL OFFERS";
+  const start = campaign.offerStartDate
+    ? new Date(campaign.offerStartDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
+    : "";
+  const end = campaign.offerEndDate
+    ? new Date(campaign.offerEndDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })
+    : "";
+  const dateRangeText = [start ? `FROM ${start.toUpperCase()}` : "", end ? `TO ${end.toUpperCase()}` : ""].filter(Boolean).join(" ");
+  const badgeText = campaign.headerBadgeText?.trim();
+  const validity = badgeText && dateRangeText
+    ? `VALID ${dateRangeText} • ${badgeText}`
+    : (dateRangeText ? `VALID ${dateRangeText}` : (badgeText || "SPECIAL OFFERS"));
 
+  if (isFirstPage) {
     return `
       <div class="header-main">
         <div class="logo-container">
           <img class="logo-img" src="${logoSrc}" alt="Logo" />
         </div>
         <div class="campaign-info">
-          <div class="company-name">${campaign.companyName || "Our Shop"}</div>
-          <div class="campaign-title">${campaign.campaignTitle || "Promo Offers"}</div>
+          <div class="campaign-title" style="color:${campaign.titleColor || campaign.headerTitleColor || "#ffffff"};">${campaign.headerTitle || campaign.campaignTitle || campaign.companyName || "Promo Offers"}</div>
+          ${campaign.headerSubtitle ? `<div class="campaign-subtitle" style="color:${campaign.headerSubtitleColor || campaign.accentColor || "#facc15"};">${campaign.headerSubtitle}</div>` : ""}
         </div>
-        <div class="date-badge">
+        <div class="date-badge" style="background:${campaign.headerBadgeColor || campaign.accentColor || "#facc15"}; color:${campaign.headerBadgeTextColor || campaign.footerBgColor || "#1e293b"};">
           ${validity}
         </div>
       </div>
@@ -93,9 +97,7 @@ function renderHeader(campaign, pageNumber, totalPages) {
           <img class="logo-img" src="${logoSrc}" alt="Logo" />
         </div>
         <div>
-          <span class="header-sub-company">${campaign.companyName || "Our Shop"}</span>
-          <span class="header-sub-separator">•</span>
-          <span class="header-sub-title">${campaign.campaignTitle || "Offers"}</span>
+          <span class="header-sub-title" style="color:${campaign.headerTitleColor || campaign.accentColor || "#facc15"};">${campaign.headerTitle || campaign.campaignTitle || campaign.companyName || "Offers"}</span>
         </div>
       </div>
       <div class="header-sub-page">
@@ -154,6 +156,7 @@ export function generateBrochureHtml(campaign, products = []) {
   // Calculate items per page based on template settings
   const productsPerPageFirst = parseInt(campaign.productsPerPage) || 8;
   const productsPerPageSubsequent = parseInt(campaign.productsPerPageSubsequent) || 10;
+  const productsPerPage = Math.max(1, productsPerPageFirst);
   
   const pages = [];
   let currentProductIndex = 0;
@@ -274,7 +277,7 @@ export function generateBrochureHtml(campaign, products = []) {
     
     /* Header main styles */
     .header-main {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color)dd 100%);
+      background: linear-gradient(135deg, var(--header-bg-color) 0%, var(--header-bg-color)dd 100%);
       color: white;
       padding: 24px;
       position: relative;
@@ -365,6 +368,15 @@ export function generateBrochureHtml(campaign, products = []) {
       letter-spacing: -0.5px;
       line-height: 1.1;
       text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .campaign-subtitle {
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.95;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
 
     .company-name {

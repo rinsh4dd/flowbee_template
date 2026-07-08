@@ -123,6 +123,8 @@ export default function DashboardPage() {
   const [downloadingId, setDownloadingId] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [templates, setTemplates] = useState([]);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
@@ -149,8 +151,12 @@ export default function DashboardPage() {
         dbService.getCampaigns(userId),
         dbService.getTemplates()
       ]);
+      const activeTemplates = tpls.filter(t => t.status === "active");
       setCampaigns(data);
-      setTemplates(tpls.filter(t => t.status === "active"));
+      setTemplates(activeTemplates);
+      if (!selectedTemplateId && activeTemplates.length > 0) {
+        setSelectedTemplateId(activeTemplates[0].id);
+      }
     } catch (error) {
       console.error("Failed to load campaigns:", error);
     } finally {
@@ -286,7 +292,7 @@ export default function DashboardPage() {
       </nav>
 
       {/* Page Content */}
-      <main className="max-w-7xl w-full mx-auto px-6 sm:px-12 pt-28 pb-16 flex-grow">
+      <main className="max-w-7xl w-full mx-auto px-6 sm:px-12 pt-28 pb-16 grow">
         
         {/* Welcome Section Banner */}
         <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-200/60 rounded-3xl p-6 md:p-8 shadow-xs relative overflow-hidden">
@@ -302,14 +308,72 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex shrink-0">
-            <Link 
-              href="/campaigns/new"
+          <div className="flex flex-col items-end gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowTemplateSelector(prev => !prev)}
               className="inline-flex items-center gap-1.5 bg-[#f97316] hover:bg-[#ea580c] text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-sm transition hover:scale-[1.01]"
             >
               <Plus className="h-4 w-4" />
               <span>Create Campaign</span>
-            </Link>
+            </button>
+
+            {showTemplateSelector && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-6">
+                <div className="w-full max-w-5xl rounded-[28px] border border-slate-200 bg-white p-4 shadow-2xl">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-slate-500">Start a new campaign</p>
+                      <h3 className="text-base font-semibold text-slate-900">Choose the template you want to customize</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowTemplateSelector(false)}
+                      className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="grid max-h-[70vh] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+                    {templates.map((template) => {
+                      const isSelected = selectedTemplateId === template.id;
+                      return (
+                        <button
+                          key={template.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTemplateId(template.id);
+                            setShowTemplateSelector(false);
+                            router.push(`/campaigns/new?templateId=${template.id}`);
+                          }}
+                          className={`overflow-hidden rounded-2xl border text-left transition ${
+                            isSelected
+                              ? "border-[#f97316] bg-orange-50 shadow-[0_10px_25px_-15px_rgba(249,115,22,0.6)]"
+                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="h-40 overflow-hidden bg-slate-50">
+                            <TemplateCardPreview template={template} />
+                          </div>
+                          <div className="p-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-semibold text-slate-800">{template.name}</span>
+                              {isSelected && <span className="text-[10px] font-bold uppercase tracking-wider text-[#f97316]">Selected</span>}
+                            </div>
+                            <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{template.description || "Ready to customize for your campaign."}</p>
+                            <div className="mt-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                              <span>Preview template</span>
+                              <span>{isSelected ? "Open editor" : "Choose"}</span>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -581,7 +645,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-left">
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Logged In As</p>
-                    <p className="text-xs font-bold text-slate-900 truncate max-w-[180px]">{user.email}</p>
+                    <p className="text-xs font-bold text-slate-900 truncate max-w-45">{user.email}</p>
                   </div>
                 </div>
 

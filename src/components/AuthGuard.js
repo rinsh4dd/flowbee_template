@@ -3,18 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth-service";
-
-/**
- * Loading Spinner Screen
- */
-function LoadingScreen({ message = "Checking security configuration..." }) {
-  return (
-    <div className="min-h-screen bg-black flex flex-col justify-center items-center font-sans">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#93cc1a] border-b-2 border-transparent"></div>
-      <p className="mt-4 text-zinc-500 font-bold text-sm tracking-wide uppercase">{message}</p>
-    </div>
-  );
-}
+import FlowbeeLoader from "@/components/FlowbeeLoader";
 
 
 /**
@@ -42,7 +31,7 @@ export function ProtectedRoute(Component) {
     }, [router]);
 
     if (checking) {
-      return <LoadingScreen message="Authorizing Session..." />;
+      return <FlowbeeLoader />;
     }
 
     return <Component {...props} user={user} />;
@@ -75,7 +64,7 @@ export function AdminRoute(Component) {
     }, [router]);
 
     if (checking) {
-      return <LoadingScreen message="Verifying Admin Permissions..." />;
+      return <FlowbeeLoader />;
     }
 
     return <Component {...props} user={user} />;
@@ -107,7 +96,7 @@ export function PublicOnlyRoute(Component) {
     }, [router]);
 
     if (checking) {
-      return <LoadingScreen message="Loading Account Configuration..." />;
+      return <FlowbeeLoader />;
     }
 
     return <Component {...props} />;

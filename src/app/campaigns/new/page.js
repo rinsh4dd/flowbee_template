@@ -186,10 +186,6 @@ function CampaignEditor() {
   };
 
   const handleGeneratePdf = async () => {
-    if (!campaignId) {
-      alert("Please save the campaign first before generating a PDF.");
-      return;
-    }
     setDownloading(true);
     try {
       const response = await fetch("/api/generate-pdf", {
@@ -198,20 +194,30 @@ function CampaignEditor() {
         body: JSON.stringify({ campaign, products }),
       });
 
-      if (!response.ok) throw new Error("Failed to generate PDF");
+      if (!response.ok) {
+        const text = await response.text();
+        let errorMessage = `Failed to generate PDF (${response.status})`;
+        try {
+          const errorBody = JSON.parse(text);
+          if (errorBody?.error) errorMessage = errorBody.error;
+        } catch (jsonError) {
+          if (text) errorMessage = text;
+        }
+        throw new Error(errorMessage);
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${campaign.campaignTitle.toLowerCase().replace(/\s+/g, "-")}-brochure.pdf`;
+      a.download = `${(campaign.campaignTitle || "brochure").toLowerCase().replace(/\s+/g, "-")}-brochure.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error("PDF download failed:", error);
-      alert("Failed to generate and download PDF. Make sure your local server is running.");
+      alert(`Failed to generate PDF: ${error.message}`);
     } finally {
       setDownloading(false);
     }
@@ -306,9 +312,9 @@ function CampaignEditor() {
       </div>
 
       {/* Editor Body Split Layout */}
-      <div className="grow grid grid-cols-1 lg:grid-cols-2 overflow-hidden h-[calc(100vh-69px-45px)] lg:h-[calc(100vh-69px)]">
+      <div className="grow grid grid-cols-1 lg:grid-cols-2 min-h-0 h-[calc(100vh-69px-45px)] lg:h-[calc(100vh-69px)]">
         {/* Left Side: Editor Form */}
-        <div className={`overflow-y-auto p-4 sm:p-6 border-r border-slate-200/60 bg-white flex flex-col ${
+        <div className={`min-h-0 overflow-y-auto p-4 sm:p-6 border-r border-slate-200/60 bg-white flex flex-col ${
           mobileView === "form" ? "flex" : "hidden lg:flex"
         }`}>
           {/* Tab Navigation */}
@@ -712,7 +718,7 @@ function CampaignEditor() {
         </div>
 
         {/* Right Side: Visual Brochure Preview Panel */}
-        <div className={`bg-[#f1f1f3] p-4 sm:p-6 flex flex-col overflow-hidden ${
+        <div className={`min-h-0 bg-[#f1f1f3] p-4 sm:p-6 flex flex-col overflow-hidden ${
           mobileView === "preview" ? "flex" : "hidden lg:flex"
         }`}>
           <BrochurePreview 

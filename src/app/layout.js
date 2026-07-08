@@ -1,6 +1,5 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import SmoothScroll from "@/components/SmoothScroll";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -29,7 +28,7 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/flowbeeWhatsappNotification_logo.jpeg" />
       </head>
       <body className="min-h-full flex flex-col bg-slate-950 text-white font-sans">
-        <SmoothScroll>{children}</SmoothScroll>
+        {children}
       </body>
     </html>
   );

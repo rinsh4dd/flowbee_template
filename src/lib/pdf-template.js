@@ -76,15 +76,23 @@ function renderHeader(campaign, pageNumber, totalPages) {
   if (isFirstPage) {
     return `
       <div class="header-main">
-        <div class="logo-container">
-          <img class="logo-img" src="${logoSrc}" alt="Logo" />
+        <div class="logo-area">
+          <div class="logo-wrapper">
+            <img class="logo-img" src="${logoSrc}" alt="Logo" />
+          </div>
         </div>
-        <div class="campaign-info">
-          <div class="campaign-title" style="color:${campaign.titleColor || campaign.headerTitleColor || "#ffffff"};">${campaign.headerTitle || campaign.campaignTitle || campaign.companyName || "Promo Offers"}</div>
-          ${campaign.headerSubtitle ? `<div class="campaign-subtitle" style="color:${campaign.headerSubtitleColor || campaign.accentColor || "#facc15"};">${campaign.headerSubtitle}</div>` : ""}
-        </div>
-        <div class="date-badge" style="background:${campaign.headerBadgeColor || campaign.accentColor || "#facc15"}; color:${campaign.headerBadgeTextColor || campaign.footerBgColor || "#1e293b"};">
-          ${validity}
+        <div class="header-content">
+          <div class="campaign-info">
+            ${campaign.companyName ? `<span class="company-badge" style="color:${campaign.accentColor || "#facc15"};">${campaign.companyName.toUpperCase()}</span>` : ""}
+            <div class="campaign-title" style="color:${campaign.titleColor || campaign.headerTitleColor || "#ffffff"};">${campaign.headerTitle || campaign.campaignTitle || "PROMO OFFERS"}</div>
+            ${campaign.headerSubtitle ? `<div class="campaign-subtitle" style="color:${campaign.headerSubtitleColor || "#cbd5e1"};">${campaign.headerSubtitle}</div>` : ""}
+          </div>
+          <div class="validity-container">
+            <span class="validity-label">LIMITED TIME OFFER</span>
+            <div class="validity-badge" style="background:${campaign.headerBadgeColor || campaign.accentColor || "#facc15"}; color:${campaign.headerBadgeTextColor || "#1e293b"};">
+              ${validity}
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -153,26 +161,23 @@ export function generateBrochureHtml(campaign, products = []) {
   // Theme Color Configurations (Dynamic based on selected template)
   const themeColor = campaign.themeColor || "#dc2626";
 
-  // Calculate items per page based on template settings
-  const productsPerPageFirst = parseInt(campaign.productsPerPage) || 8;
-  const productsPerPageSubsequent = parseInt(campaign.productsPerPageSubsequent) || 10;
-  const productsPerPage = Math.max(1, productsPerPageFirst);
-  
+  // Distribute products as evenly as possible across selected brochure pages
+  const totalPages = parseInt(campaign.brochurePages) || 2;
   const pages = [];
-  let currentProductIndex = 0;
-  
-  while (currentProductIndex < products.length || pages.length === 0) {
-    const isFirstPage = pages.length === 0;
-    const limit = isFirstPage ? productsPerPageFirst : productsPerPageSubsequent;
-    const pageProducts = products.slice(currentProductIndex, currentProductIndex + limit);
-    pages.push({
-      pageNumber: pages.length + 1,
-      products: pageProducts
-    });
-    currentProductIndex += limit;
-    
-    if (pageProducts.length === 0 && currentProductIndex >= products.length) {
-      break;
+
+  if (products.length === 0) {
+    pages.push({ pageNumber: 1, products: [] });
+  } else {
+    let remainingProducts = [...products];
+    for (let p = 0; p < totalPages; p++) {
+      const pagesLeft = totalPages - p;
+      const limit = Math.ceil(remainingProducts.length / pagesLeft);
+      const pageProducts = remainingProducts.slice(0, limit);
+      pages.push({
+        pageNumber: p + 1,
+        products: pageProducts
+      });
+      remainingProducts = remainingProducts.slice(limit);
     }
   }
 
@@ -189,7 +194,10 @@ export function generateBrochureHtml(campaign, products = []) {
   const renderedPagesHtml = pages.map((page) => {
     const sectionsHtml = layoutOrder.map(sectionId => {
       if (sectionId === "header") {
-        return renderHeader(campaign, page.pageNumber, pages.length);
+        if (page.pageNumber === 1) {
+          return renderHeader(campaign, page.pageNumber, pages.length);
+        }
+        return "";
       }
       if (sectionId === "products") {
         return `
@@ -199,7 +207,10 @@ export function generateBrochureHtml(campaign, products = []) {
         `;
       }
       if (sectionId === "footer") {
-        return renderFooter(campaign, qrCodeSrc);
+        if (page.pageNumber === pages.length) {
+          return renderFooter(campaign, qrCodeSrc);
+        }
+        return "";
       }
       return "";
     }).join("");
@@ -277,14 +288,101 @@ export function generateBrochureHtml(campaign, products = []) {
     
     /* Header main styles */
     .header-main {
-      background: linear-gradient(135deg, var(--header-bg-color) 0%, var(--header-bg-color)dd 100%);
+      background: linear-gradient(135deg, var(--header-bg-color) 0%, #0f172a 100%);
       color: white;
-      padding: 24px;
+      padding: 24px 32px;
       position: relative;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 28px;
       border-bottom: 6px solid var(--accent-color);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo-area {
+      flex-shrink: 0;
+    }
+
+    .logo-wrapper {
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 90px;
+      height: 90px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-content {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .campaign-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-grow: 1;
+    }
+
+    .company-badge {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .campaign-title {
+      font-size: 30px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      line-height: 1.15;
+      margin: 0;
+      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .campaign-subtitle {
+      font-size: 12px;
+      font-weight: 500;
+      margin: 2px 0 0 0;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .validity-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .validity-label {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+    }
+
+    .validity-badge {
+      font-weight: 700;
+      font-size: 10px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: right;
     }
 
     .header-sub {
@@ -327,18 +425,6 @@ export function generateBrochureHtml(campaign, products = []) {
       font-weight: 600;
     }
 
-    .logo-container {
-      background: white;
-      padding: 8px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 80px;
-      height: 80px;
-    }
-
     .logo-container-small {
       background: white;
       padding: 4px;
@@ -355,50 +441,6 @@ export function generateBrochureHtml(campaign, products = []) {
       max-height: 100%;
       object-fit: contain;
     }
-
-    .campaign-info {
-      flex-grow: 1;
-      margin-left: 20px;
-    }
-
-    .campaign-title {
-      font-size: 32px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: -0.5px;
-      line-height: 1.1;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .campaign-subtitle {
-      margin-top: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      opacity: 0.95;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-
-    .company-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--accent-color);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
-    }
-
-    .date-badge {
-      background: var(--accent-color);
-      color: var(--dark-slate);
-      font-weight: 700;
-      font-size: 11px;
-      padding: 6px 14px;
-      border-radius: 9999px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
     
     /* Product Grid layout */
     .grid-container {
@@ -406,6 +448,7 @@ export function generateBrochureHtml(campaign, products = []) {
       padding: 16px;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(auto-fill, minmax(220px, 1fr));
       grid-gap: 12px;
       align-content: start;
       background-color: var(--bg-light);
@@ -423,7 +466,9 @@ export function generateBrochureHtml(campaign, products = []) {
       position: relative;
       transition: all 0.2s;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-      height: 240px;
+      height: 100%;
+      min-height: 220px;
+      max-height: 275px;
     }
 
     .badge {

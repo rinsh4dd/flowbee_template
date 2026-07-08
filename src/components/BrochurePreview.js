@@ -11,12 +11,8 @@ export default function BrochurePreview({ campaign, products }) {
   const containerRef = useRef(null);
   const frameAreaRef = useRef(null);
 
-  // Compute number of pages based on pagination rules in pdf-template.js
-  const productsPerPageFirst = 8;
-  const productsPerPageSubsequent = 10;
-  const numPages = products.length === 0 
-    ? 1 
-    : Math.max(1, 1 + Math.ceil(Math.max(0, products.length - productsPerPageFirst) / productsPerPageSubsequent));
+  // Number of pages is read directly from the campaign/template config
+  const numPages = parseInt(campaign.brochurePages) || 2;
 
   const totalHeight = 1123 * numPages;
 
@@ -121,7 +117,7 @@ export default function BrochurePreview({ campaign, products }) {
       {/* Frame Container - Fitted to match workspace style with vertical scrolling enabled */}
       <div 
         ref={frameAreaRef}
-        className="grow relative overflow-y-auto flex justify-center bg-slate-250/20 border border-slate-200/85 rounded-2xl p-4"
+        className="grow relative overflow-y-auto flex justify-center bg-slate-900 border border-slate-850 rounded-3xl p-4 sm:p-6 shadow-inner"
       >
         <div 
           style={{ 
@@ -131,18 +127,18 @@ export default function BrochurePreview({ campaign, products }) {
             transformOrigin: "top center",
             position: "absolute"
           }}
-          className="transition-transform duration-200 ease-out shrink-0"
+          className="transition-transform duration-200 ease-out shrink-0 rounded-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.5)] border border-slate-800"
         >
           {htmlContent ? (
             <iframe
               srcDoc={htmlContent}
               style={{ width: "794px", height: `${totalHeight}px` }}
-              className="border-0 bg-white rounded-2xl shadow-lg pointer-events-none"
+              className="border-0 bg-white pointer-events-none"
               title="Brochure PDF Preview"
               sandbox="allow-same-origin"
             />
           ) : (
-            <div className="w-[794px] h-[1123px] bg-white rounded-2xl shadow-lg flex items-center justify-center text-slate-400 text-sm font-semibold">
+            <div className="w-[794px] h-[1123px] bg-white flex items-center justify-center text-slate-400 text-sm font-semibold">
               Generating Live Brochure View...
             </div>
           )}

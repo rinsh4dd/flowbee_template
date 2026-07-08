@@ -65,6 +65,7 @@ function CampaignEditor() {
     footerBgColor: "#1e293b",
     textColor: "#1f2937",
     currency: "INR",
+    brochurePages: 2,
     productsPerPage: 8,
     productsPerPageSubsequent: 10,
     layoutOrder: ["header", "products", "footer"],
@@ -107,7 +108,8 @@ function CampaignEditor() {
               phone: "+968 9123 4567",
               whatsapp: "+968 9123 4567",
               terms: "Offers valid till stocks last. Purchase limits apply.",
-              currency: "INR"
+              currency: "INR",
+              brochurePages: selectedTemplate?.brochurePages || 2
             }));
             setLoading(false);
           }).catch((err) => {
@@ -312,7 +314,7 @@ function CampaignEditor() {
       </div>
 
       {/* Editor Body Split Layout */}
-      <div className="grow grid grid-cols-1 lg:grid-cols-2 min-h-0 h-[calc(100vh-69px-45px)] lg:h-[calc(100vh-69px)]">
+      <div className="grow grid grid-cols-1 lg:grid-cols-[480px_1fr] min-h-0 h-[calc(100vh-69px-45px)] lg:h-[calc(100vh-69px)]">
         {/* Left Side: Editor Form */}
         <div className={`min-h-0 overflow-y-auto p-4 sm:p-6 border-r border-slate-200/60 bg-white flex flex-col ${
           mobileView === "form" ? "flex" : "hidden lg:flex"
@@ -368,6 +370,19 @@ function CampaignEditor() {
                       Modern layout
                     </div>
                   </div>
+
+                  {/* Brochure Title Input (Full Width) */}
+                  <div className="mb-4">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Brochure Document Name</label>
+                    <input
+                      type="text"
+                      value={campaign.campaignTitle || ""}
+                      onChange={(e) => setCampaign(prev => ({ ...prev, campaignTitle: e.target.value }))}
+                      placeholder="e.g. Weekend Offers Catalog"
+                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                    />
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Company / Store Name</label>
@@ -398,7 +413,7 @@ function CampaignEditor() {
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Title</label>
                     <input
                       type="text"
-                      value={campaign.headerTitle || campaign.campaignTitle}
+                      value={campaign.headerTitle || ""}
                       onChange={(e) => setCampaign(prev => ({ ...prev, headerTitle: e.target.value }))}
                       placeholder="e.g. Super Savings"
                       className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
@@ -620,6 +635,20 @@ function CampaignEditor() {
                       <option value="KWD">KWD (Kuwaiti Dinar)</option>
                       <option value="EUR">EUR (Euro)</option>
                       <option value="GBP">GBP (British Pound)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Brochure Pages</label>
+                    <select
+                      value={campaign.brochurePages || 2}
+                      onChange={(e) => setCampaign(prev => ({ ...prev, brochurePages: parseInt(e.target.value) || 2 }))}
+                      className="w-full px-3.5 py-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm font-medium transition"
+                    >
+                      <option value={1}>1 Page</option>
+                      <option value={2}>2 Pages</option>
+                      <option value={3}>3 Pages</option>
+                      <option value={4}>4 Pages</option>
                     </select>
                   </div>
 

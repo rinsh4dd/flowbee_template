@@ -133,6 +133,7 @@ function AdminTemplatesPage() {
     name: "",
     type: "offer_brochure",
     status: "active",
+    brochurePages: 2,
     productsPerPage: 8,
     productsPerPageSubsequent: 10,
     description: "",
@@ -197,6 +198,7 @@ function AdminTemplatesPage() {
         name: "",
         type: "offer_brochure",
         status: "active",
+        brochurePages: 2,
         productsPerPage: 8,
         productsPerPageSubsequent: 10,
         description: "",
@@ -222,6 +224,7 @@ function AdminTemplatesPage() {
     setEditingId(template.id);
     setForm({
       ...template,
+      brochurePages: template.brochurePages || 2,
       productsPerPageSubsequent: template.productsPerPageSubsequent || 10,
       headerBgColor: template.headerBgColor || template.themeColor || "#dc2626",
       accentColor: template.accentColor || "#facc15",
@@ -482,7 +485,7 @@ function AdminTemplatesPage() {
                   <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-bold text-slate-450 uppercase tracking-wider">
                     <div className="flex items-center gap-1">
                       <Layers className="h-3.5 w-3.5 text-slate-400" />
-                      <span>Pages: {template.productsPerPage}/{template.productsPerPageSubsequent || 10} Items</span>
+                      <span>Brochure Pages: {template.brochurePages || 2}</span>
                     </div>
                     
                     <div className="flex items-center gap-1">
@@ -644,30 +647,18 @@ function AdminTemplatesPage() {
               {/* Tab 2: Layout & structure */}
               {modalTab === "layout" && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Page 1 Max Items</label>
-                      <input
-                        type="number"
-                        min="4"
-                        max="30"
-                        value={form.productsPerPage}
-                        onChange={(e) => setForm(prev => ({ ...prev, productsPerPage: parseInt(e.target.value) || 8 }))}
-                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] focus:bg-white text-xs font-semibold"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Page 2+ Max Items</label>
-                      <input
-                        type="number"
-                        min="4"
-                        max="30"
-                        value={form.productsPerPageSubsequent}
-                        onChange={(e) => setForm(prev => ({ ...prev, productsPerPageSubsequent: parseInt(e.target.value) || 10 }))}
-                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] focus:bg-white text-xs font-semibold"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Brochure Pages</label>
+                    <select
+                      value={form.brochurePages || 2}
+                      onChange={(e) => setForm(prev => ({ ...prev, brochurePages: parseInt(e.target.value) || 2 }))}
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] focus:bg-white text-xs font-semibold"
+                    >
+                      <option value={1}>1 Page</option>
+                      <option value={2}>2 Pages</option>
+                      <option value={3}>3 Pages</option>
+                      <option value={4}>4 Pages</option>
+                    </select>
                   </div>
 
                   <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/50 space-y-3">

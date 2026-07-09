@@ -401,7 +401,7 @@ export const WeFiveTuesdayMarketTemplate = {
       border-radius: 12px;
       padding: 6px;
       border: 1px solid rgba(255, 255, 255, 0.5);
-      width: 72px;
+      width: 110px;
       height: 72px;
       display: flex;
       align-items: center;

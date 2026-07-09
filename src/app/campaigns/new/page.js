@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/lib/auth-service";
 import { dbService } from "@/lib/db-service";
@@ -42,31 +42,6 @@ function CampaignEditor() {
   const [downloading, setDownloading] = useState(false);
   const [toast, setToast] = useState({ message: "", visible: false });
 
-  const [rawImage, setRawImage] = useState(null);
-  const [cropScale, setCropScale] = useState(1);
-  const [cropOffsetX, setCropOffsetX] = useState(0);
-  const [cropOffsetY, setCropOffsetY] = useState(0);
-  const [showCropper, setShowCropper] = useState(false);
-  const previewCanvasRef = useRef(null);
-
-  useEffect(() => {
-    if (!rawImage || !previewCanvasRef.current || !showCropper) return;
-    const canvas = previewCanvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const img = new Image();
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const w = img.width * cropScale;
-      const h = img.height * cropScale;
-      const x = (canvas.width - w) / 2 + cropOffsetX;
-      const y = (canvas.height - h) / 2 + cropOffsetY;
-      ctx.drawImage(img, x, y, w, h);
-    };
-    img.src = rawImage;
-  }, [rawImage, cropScale, cropOffsetX, cropOffsetY, showCropper]);
-
   const triggerToast = (message) => {
     setToast({ message, visible: true });
     window.setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 1600);
@@ -75,8 +50,6 @@ function CampaignEditor() {
   // Tab states
   const [activeTab, setActiveTab] = useState("header"); // header, products, footer
   const [mobileView, setMobileView] = useState("form"); // form, preview
-
-  const [croppingTarget, setCroppingTarget] = useState("headerLogo");
 
   // Campaign Header Form State
   const [campaign, setCampaign] = useState({
@@ -187,17 +160,19 @@ function CampaignEditor() {
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      setRawImage(reader.result);
-      setCroppingTarget(target);
       if (target === "headerLogo") {
-        setCampaign(prev => ({ ...prev, rawLogoUrl: reader.result }));
+        setCampaign(prev => ({
+          ...prev,
+          logoUrl: reader.result,
+          rawLogoUrl: reader.result,
+        }));
       } else {
-        setCampaign(prev => ({ ...prev, rawFooterLogoUrl: reader.result }));
+        setCampaign(prev => ({
+          ...prev,
+          footerLogoUrl: reader.result,
+          rawFooterLogoUrl: reader.result,
+        }));
       }
-      setCropScale(1);
-      setCropOffsetX(0);
-      setCropOffsetY(0);
-      setShowCropper(true);
     };
     reader.readAsDataURL(file);
   };
@@ -637,21 +612,6 @@ function CampaignEditor() {
                             className="hidden"
                           />
                         </label>
-                        {(campaign.rawLogoUrl || campaign.logoUrl) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRawImage(campaign.rawLogoUrl || campaign.logoUrl);
-                              setCropScale(1);
-                              setCropOffsetX(0);
-                              setCropOffsetY(0);
-                              setShowCropper(true);
-                            }}
-                            className="bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-800 transition"
-                          >
-                            Resize Logo
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -724,22 +684,6 @@ function CampaignEditor() {
                           className="hidden"
                         />
                       </label>
-                      {(campaign.rawFooterLogoUrl || campaign.footerLogoUrl) && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRawImage(campaign.rawFooterLogoUrl || campaign.footerLogoUrl);
-                            setCroppingTarget("footerLogo");
-                            setCropScale(1);
-                            setCropOffsetX(0);
-                            setCropOffsetY(0);
-                            setShowCropper(true);
-                          }}
-                          className="bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold text-[#f97316] hover:text-[#ea580c] transition cursor-pointer"
-                        >
-                          Adjust Layout
-                        </button>
-                      )}
                       <p className="text-[10px] text-slate-400 w-full mt-1.5 font-semibold">Square or landscape logo works best.</p>
                     </div>
                   </div>
@@ -885,114 +829,6 @@ function CampaignEditor() {
           
         </div>
       </div>
-
-      {/* Dynamic Canvas Logo Cropper Backdrop-Blur Modal */}
-      {showCropper && (
-        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl flex flex-col items-center">
-            
-            <div className="text-center mb-4">
-              <span className="bg-emerald-100 text-emerald-800 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                WeFive Layout Engine
-              </span>
-              <h3 className="text-sm font-black text-slate-900 mt-1">Adjust Brand Logo Fitting</h3>
-            </div>
-            
-            <div className="bg-slate-950 p-6 rounded-2xl border border-slate-900 flex justify-center items-center shadow-inner relative overflow-hidden w-full h-[180px]">
-              <canvas 
-                ref={previewCanvasRef} 
-                width={200}
-                height={200}
-                className="bg-white rounded-xl shadow-lg border border-white/20"
-                style={{
-                  width: '130px',
-                  height: '130px'
-                }}
-              />
-            </div>
-            
-            <div className="w-full mt-6 space-y-4">
-              {/* Zoom Slider */}
-              <div>
-                <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  <span>Logo Zoom Scale</span>
-                  <span>{Math.round(cropScale * 100)}%</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0.1" 
-                  max="3" 
-                  step="0.05"
-                  value={cropScale}
-                  onChange={(e) => setCropScale(parseFloat(e.target.value))}
-                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-800"
-                />
-              </div>
-              
-              {/* Horizontal Offset Slider */}
-              <div>
-                <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  <span>Horizontal Align</span>
-                  <span>{cropOffsetX}px</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="-150" 
-                  max="150" 
-                  step="1"
-                  value={cropOffsetX}
-                  onChange={(e) => setCropOffsetX(parseInt(e.target.value))}
-                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-800"
-                />
-              </div>
-              
-              {/* Vertical Offset Slider */}
-              <div>
-                <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  <span>Vertical Align</span>
-                  <span>{cropOffsetY}px</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="-150" 
-                  max="150" 
-                  step="1"
-                  value={cropOffsetY}
-                  onChange={(e) => setCropOffsetY(parseInt(e.target.value))}
-                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-800"
-                />
-              </div>
-            </div>
-            
-            <div className="flex gap-3 w-full mt-6">
-              <button
-                type="button"
-                onClick={() => setShowCropper(false)}
-                className="flex-1 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (previewCanvasRef.current) {
-                    const dataUrl = previewCanvasRef.current.toDataURL("image/png");
-                    if (croppingTarget === "headerLogo") {
-                      setCampaign(prev => ({ ...prev, logoUrl: dataUrl }));
-                    } else {
-                      setCampaign(prev => ({ ...prev, footerLogoUrl: dataUrl }));
-                    }
-                  }
-                  setShowCropper(false);
-                }}
-                className="flex-1 py-2.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md"
-              >
-                Lock Placement
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

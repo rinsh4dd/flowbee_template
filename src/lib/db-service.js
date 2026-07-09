@@ -230,13 +230,13 @@ export const dbService = {
     const seedDefault = async () => {
       const defaultTemplates = [
         {
-          id: "hypermarket_offer",
-          name: "Hypermarket Offer Template",
+          id: "wefive_tuesday_market",
+          name: "WeFive Tuesday Market Template",
           type: "offer_brochure",
           status: "active",
-          productsPerPage: 8,
-          description: "Perfect for retail supermarkets, hypermarkets, and electronics shops. Optimized for product grids, old/new price comparison, validity badges, and custom branding footer.",
-          themeColor: "#dc2626",
+          brochurePages: 1,
+          description: "Organic theme with green gradient backgrounds, bilingual Malayalam/English labels, yellow currency circles, and high-impact bounce badges (perfect for grocery/produce markets).",
+          themeColor: "#065f46",
           createdAt: new Date().toISOString()
         }
       ];
@@ -245,6 +245,14 @@ export const dbService = {
 
     return runFirestore(
       async () => {
+        // Delete old templates from Firestore
+        try {
+          await deleteDoc(doc(db, "templates", "hypermarket_offer"));
+          await deleteDoc(doc(db, "templates", "carry_food_red"));
+        } catch (e) {
+          console.error("Failed to delete Firestore templates:", e);
+        }
+
         const snapshot = await getDocs(collection(db, "templates"));
         if (snapshot.empty) {
           const defaults = await seedDefault();
@@ -253,16 +261,23 @@ export const dbService = {
           }
           return defaults;
         }
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const defaults = await seedDefault();
+
+        // Sync WeFive if missing
+        if (!docs.some(t => t.id === "wefive_tuesday_market")) {
+          const weFive = defaults.find(t => t.id === "wefive_tuesday_market");
+          if (weFive) {
+            await setDoc(doc(db, "templates", weFive.id), weFive);
+            docs.push(weFive);
+          }
+        }
+        return docs.filter(t => t.id === "wefive_tuesday_market");
       },
       async () => {
-        const local = getLocalData("flowbee_templates");
-        if (local.length === 0) {
-          const defaults = await seedDefault();
-          setLocalData("flowbee_templates", defaults);
-          return defaults;
-        }
-        return local;
+        const defaults = await seedDefault();
+        setLocalData("flowbee_templates", defaults);
+        return defaults;
       }
     );
   },

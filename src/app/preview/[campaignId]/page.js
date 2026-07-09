@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { dbService } from "@/lib/db-service";
 import { generateBrochureHtml } from "@/lib/pdf-template";
@@ -19,6 +19,37 @@ function CampaignPreviewPage() {
   const [loading, setLoading] = useState(true);
   const [htmlContent, setHtmlContent] = useState("");
   const [downloading, setDownloading] = useState(false);
+
+  const [scale, setScale] = useState(1);
+  const frameAreaRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (frameAreaRef.current) {
+        const width = frameAreaRef.current.clientWidth;
+        
+        // A4 page reference size (794px width)
+        const targetWidth = 794;
+        
+        // Scale to fit width, leaving a tiny bit of padding (32px)
+        const widthScale = (width - 32) / targetWidth;
+        
+        // Clamp scale between 0.15 and 1.5
+        setScale(Math.max(Math.min(widthScale, 1.5), 0.15));
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    
+    // Quick delay to ensure initial DOM layout has completed
+    const timeoutId = setTimeout(handleResize, 100);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, [htmlContent]);
 
   useEffect(() => {
     if (campaignId) {
@@ -88,6 +119,10 @@ function CampaignPreviewPage() {
     return <FlowbeeLoader />;
   }
 
+  const productsLimit = parseInt(campaign?.productsPerPage) || 19;
+  const numPages = Math.max(1, Math.ceil(products.length / productsLimit));
+  const totalHeight = 1123 * numPages;
+
   return (
     <div className="min-h-screen bg-[#fafafb] flex flex-col font-sans">
       {/* Print styles */}
@@ -151,27 +186,34 @@ function CampaignPreviewPage() {
       </div>
 
       {/* Embedded Brochure Render */}
-      <div className="grow overflow-y-auto p-6 sm:p-10 flex justify-center bg-[#f1f1f3]">
-        <div className="shadow-xl rounded-2xl overflow-hidden border border-slate-200/60 bg-white">
+      <div className="grow overflow-y-auto p-6 sm:p-10 flex justify-center bg-[#f1f1f3] relative" ref={frameAreaRef}>
+        <div 
+          style={{
+            width: "794px",
+            height: `${totalHeight}px`,
+            transform: `scale(${scale})`,
+            transformOrigin: "top center",
+            position: "absolute"
+          }}
+          className="shadow-xl rounded-2xl overflow-hidden border border-slate-200/60 bg-white transition-transform duration-200 ease-out shrink-0"
+        >
           <iframe
             srcDoc={htmlContent}
-            className="w-[210mm] h-[calc(297mm_*_2)] border-0" 
-            style={{ height: "auto", minHeight: "1123px" }}
+            style={{ width: "794px", height: `${totalHeight}px` }}
+            className="border-0 bg-white pointer-events-none"
             title="Brochure Full Layout"
             sandbox="allow-same-origin"
-            onLoad={(e) => {
-              // Adjust iframe height dynamically to match its contents if possible
-              try {
-                const iframe = e.target;
-                if (iframe.contentWindow?.document?.body) {
-                  iframe.style.height = `${iframe.contentWindow.document.body.scrollHeight}px`;
-                }
-              } catch (err) {
-                console.error("Failed to resize preview iframe:", err);
-              }
-            }}
           />
         </div>
+        
+        {/* Visual spacer to preserve vertical scroll scrollbar height */}
+        <div 
+          style={{ 
+            height: `${totalHeight * scale + 24}px`, 
+            width: "1px",
+            pointerEvents: "none"
+          }} 
+        />
       </div>
     </div>
   );

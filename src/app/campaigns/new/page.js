@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/lib/auth-service";
 import { dbService } from "@/lib/db-service";
@@ -17,7 +17,15 @@ import {
   Sparkles,
   FileDown,
   Eye,
-  Edit2
+  Edit2,
+  Settings,
+  Image as ImageIcon,
+  Trash2,
+  Calendar,
+  Coins,
+  Layers,
+  Check,
+  Info
 } from "lucide-react";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/AuthGuard";
@@ -34,6 +42,31 @@ function CampaignEditor() {
   const [downloading, setDownloading] = useState(false);
   const [toast, setToast] = useState({ message: "", visible: false });
 
+  const [rawImage, setRawImage] = useState(null);
+  const [cropScale, setCropScale] = useState(1);
+  const [cropOffsetX, setCropOffsetX] = useState(0);
+  const [cropOffsetY, setCropOffsetY] = useState(0);
+  const [showCropper, setShowCropper] = useState(false);
+  const previewCanvasRef = useRef(null);
+
+  useEffect(() => {
+    if (!rawImage || !previewCanvasRef.current || !showCropper) return;
+    const canvas = previewCanvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const w = img.width * cropScale;
+      const h = img.height * cropScale;
+      const x = (canvas.width - w) / 2 + cropOffsetX;
+      const y = (canvas.height - h) / 2 + cropOffsetY;
+      ctx.drawImage(img, x, y, w, h);
+    };
+    img.src = rawImage;
+  }, [rawImage, cropScale, cropOffsetX, cropOffsetY, showCropper]);
+
   const triggerToast = (message) => {
     setToast({ message, visible: true });
     window.setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 1600);
@@ -41,7 +74,9 @@ function CampaignEditor() {
   
   // Tab states
   const [activeTab, setActiveTab] = useState("header"); // header, products, footer
-  const [mobileView, setMobileView] = useState("form"); // form, preview (for mobile responsive tab override)
+  const [mobileView, setMobileView] = useState("form"); // form, preview
+
+  const [croppingTarget, setCroppingTarget] = useState("headerLogo");
 
   // Campaign Header Form State
   const [campaign, setCampaign] = useState({
@@ -53,21 +88,27 @@ function CampaignEditor() {
     offerStartDate: "",
     offerEndDate: "",
     logoUrl: "",
+    rawLogoUrl: "",
+    footerLogoUrl: "",
+    rawFooterLogoUrl: "",
+    footerBrandName1: "",
+    footerBrandName2: "",
+    footerBrandSub: "",
     footerAddress: "",
     phone: "",
     whatsapp: "",
     qrCodeUrl: "",
     terms: "",
-    templateId: "hypermarket_offer",
-    themeColor: "#facc15",
-    headerBgColor: "#dc2626",
+    templateId: "wefive_tuesday_market",
+    themeColor: "#065f46",
+    headerBgColor: "#064e3b",
     accentColor: "#facc15",
-    footerBgColor: "#1e293b",
+    footerBgColor: "#064e3b",
     textColor: "#1f2937",
     currency: "INR",
-    brochurePages: 2,
-    productsPerPage: 8,
-    productsPerPageSubsequent: 10,
+    brochurePages: 1,
+    productsPerPage: 15,
+    productsPerPageSubsequent: 20,
     layoutOrder: ["header", "products", "footer"],
     status: "draft"
   });
@@ -92,24 +133,24 @@ function CampaignEditor() {
             setCampaign(prev => ({
               ...prev,
               templateId: selectedTemplateId,
-              themeColor: selectedTemplate?.themeColor || "#facc15",
-              headerBgColor: selectedTemplate?.themeColor || "#dc2626",
+              themeColor: selectedTemplate?.themeColor || "#065f46",
+              headerBgColor: selectedTemplate?.themeColor || "#064e3b",
               accentColor: "#facc15",
-              footerBgColor: "#1e293b",
+              footerBgColor: "#064e3b",
               textColor: "#1f2937",
-              companyName: "ABC SUPERMARKET",
-              campaignTitle: "Weekend Offer",
-              headerTitle: "Weekend Offer",
-              headerSubtitle: "Special deals for this week",
-              headerBadgeText: "Valid this week",
+              companyName: "WEFIVE HYPERMARKET",
+              campaignTitle: "Tuesday Market Offer",
+              headerTitle: "ചൊവ്വാ ചന്ത",
+              headerSubtitle: "Tuesday Market Savings",
+              headerBadgeText: "ONLY ON 16 JUNE 2026",
               offerStartDate: new Date().toISOString().split("T")[0],
               offerEndDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-              footerAddress: "Opp. Grand Mall, Al Khuwair, Muscat, Oman",
-              phone: "+968 9123 4567",
-              whatsapp: "+968 9123 4567",
-              terms: "Offers valid till stocks last. Purchase limits apply.",
+              footerAddress: "# CHERUTHURUTHY CHUNGAM, THRISSUR 679531",
+              phone: "+91 8086313300",
+              whatsapp: "+91 8943313300",
+              terms: "Bulk purchase not allowed. Offer valid till stock last. All pictures shown are for illustration purpose only.",
               currency: "INR",
-              brochurePages: selectedTemplate?.brochurePages || 2
+              brochurePages: selectedTemplate?.brochurePages || 1
             }));
             setLoading(false);
           }).catch((err) => {
@@ -141,12 +182,22 @@ function CampaignEditor() {
     }
   };
 
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = (e, target = "headerLogo") => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      setCampaign(prev => ({ ...prev, logoUrl: reader.result }));
+      setRawImage(reader.result);
+      setCroppingTarget(target);
+      if (target === "headerLogo") {
+        setCampaign(prev => ({ ...prev, rawLogoUrl: reader.result }));
+      } else {
+        setCampaign(prev => ({ ...prev, rawFooterLogoUrl: reader.result }));
+      }
+      setCropScale(1);
+      setCropOffsetX(0);
+      setCropOffsetY(0);
+      setShowCropper(true);
     };
     reader.readAsDataURL(file);
   };
@@ -176,8 +227,10 @@ function CampaignEditor() {
       }
       
       if (status === "completed") {
-        triggerToast("ok");
+        triggerToast("Brochure successfully published!");
         window.setTimeout(() => router.push("/dashboard"), 1200);
+      } else {
+        triggerToast("Draft successfully saved!");
       }
     } catch (error) {
       console.error("Failed to save campaign:", error);
@@ -230,440 +283,352 @@ function CampaignEditor() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafb] text-[#1e293b] font-sans flex flex-col selection:bg-[#f97316] selection:text-white">
+    <div className="min-h-screen bg-[#fafafb] text-[#1f2937] font-sans flex flex-col select-none antialiased">
+      {/* Toast Notification */}
       {toast.visible && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-slate-950/95 border border-slate-200/10 px-4 py-3 text-sm font-semibold text-white shadow-2xl backdrop-blur-md">
+        <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-emerald-950/95 border border-emerald-500/20 px-5 py-3.5 text-xs font-bold text-white shadow-2xl backdrop-blur-md flex items-center gap-2 animate-bounce">
+          <Check className="w-4 h-4 text-yellow-400" />
           {toast.message}
         </div>
       )}
-      {/* Editor Header */}
-      <header className="border-b border-slate-200/60 bg-white/90 backdrop-blur-md px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-50 shadow-xs">
+
+      {/* Modern WeFive Gradient Header Bar */}
+      <header className="border-b border-emerald-850 bg-gradient-to-r from-emerald-900 to-green-950 text-white px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between sticky top-0 z-50 shadow-md gap-4">
         <div className="flex items-center gap-3">
           <Link 
             href="/dashboard"
-            className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 rounded-xl transition text-slate-500 hover:text-slate-800"
+            className="p-2.5 bg-white/10 hover:bg-white/20 active:bg-white/30 border border-white/10 rounded-xl transition-all text-white/80 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="min-w-0 text-left">
-            <h1 className="font-bold text-sm text-slate-900 truncate">
-              {campaignId ? "Edit Brochure" : "New Brochure"}
+            <span className="bg-emerald-800 text-yellow-300 font-extrabold text-[10px] px-2 py-0.5 rounded-full border border-yellow-400/20 uppercase tracking-widest leading-none block w-max mb-1">
+              Active Studio Session
+            </span>
+            <h1 className="font-extrabold text-lg text-white truncate leading-none">
+              {campaignId ? "Update Brochure Draft" : "New Campaign Generator"}
             </h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">{campaign.companyName} • {campaign.campaignTitle}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Global Control Button Stack */}
+        <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto justify-end">
           <button
             onClick={() => handleSave("draft")}
             disabled={saving}
-            className="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 rounded-xl text-[10px] sm:text-xs font-bold text-slate-600 hover:text-slate-800 transition flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+            className="flex-1 sm:flex-none px-4 py-2 bg-white/10 hover:bg-white/15 active:bg-white/25 border border-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
-            <Save className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Save Draft</span>
+            <Save className="h-4 w-4 text-emerald-400" />
+            <span>Save Draft</span>
           </button>
           
           <button
             onClick={() => handleSave("completed")}
             disabled={saving}
-            className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl text-[10px] sm:text-xs font-bold text-emerald-700 transition flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+            className="flex-1 sm:flex-none px-4 py-2 bg-yellow-400 hover:bg-yellow-300 active:bg-yellow-500 text-emerald-950 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-md shadow-yellow-950/20"
           >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Finish</span>
+            <Sparkles className="h-4 w-4" />
+            <span>Finish & Publish</span>
           </button>
 
           <button
             onClick={handleGeneratePdf}
             disabled={downloading}
-            className="px-3.5 py-2 bg-[#f97316] hover:bg-[#ea580c] rounded-xl text-[10px] sm:text-xs font-bold text-white transition flex items-center gap-1 disabled:opacity-50 cursor-pointer shadow-xs"
+            className="px-4 py-2 bg-sky-600 hover:bg-sky-500 rounded-xl text-xs font-bold text-white transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-md shadow-sky-950/25"
           >
             {downloading ? (
               <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full h-3.5 w-3.5"></span>
             ) : (
-              <FileDown className="h-3.5 w-3.5" />
+              <FileDown className="h-4 w-4" />
             )}
-            <span>PDF</span>
+            <span>Export PDF</span>
           </button>
         </div>
       </header>
 
-      {/* Mobile Workspace Toggle Bar */}
-      <div className="lg:hidden flex bg-white border-b border-slate-200/60 p-1 shrink-0">
+      {/* Mobile Screen Responsive Tab Selector */}
+      <div className="lg:hidden flex bg-white border-b border-slate-200 p-1 shrink-0">
         <button
           onClick={() => setMobileView("form")}
           className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1.5 transition rounded-xl ${
             mobileView === "form" 
-              ? "bg-slate-100 text-slate-900" 
+              ? "bg-emerald-800/10 text-emerald-900" 
               : "text-slate-400 hover:text-slate-600"
           }`}
         >
           <Edit2 className="h-4 w-4" />
-          <span>Edit Details</span>
+          <span>Editor Workspace</span>
         </button>
         <button
           onClick={() => setMobileView("preview")}
           className={`flex-1 py-3 text-xs font-bold flex items-center justify-center gap-1.5 transition rounded-xl ${
             mobileView === "preview" 
-              ? "bg-slate-100 text-slate-900" 
+              ? "bg-emerald-800/10 text-emerald-900" 
               : "text-slate-400 hover:text-slate-600"
           }`}
         >
           <Eye className="h-4 w-4" />
-          <span>Live Preview</span>
+          <span>Visual Live Preview</span>
         </button>
       </div>
 
-      {/* Editor Body Split Layout */}
-      <div className="grow grid grid-cols-1 lg:grid-cols-[480px_1fr] min-h-0 h-[calc(100vh-69px-45px)] lg:h-[calc(100vh-69px)]">
-        {/* Left Side: Editor Form */}
-        <div className={`min-h-0 overflow-y-auto p-4 sm:p-6 border-r border-slate-200/60 bg-white flex flex-col ${
+      {/* Editor Main Content Area */}
+      <div className="grow grid grid-cols-1 lg:grid-cols-[460px_1fr] min-h-0 h-[calc(100vh-69px-45px)] lg:h-[calc(100vh-69px)]">
+        
+        {/* LEFT WORKSPACE SIDEBAR */}
+        <div className={`min-h-0 overflow-y-auto p-4 sm:p-6 border-r border-slate-200 bg-white flex flex-col ${
           mobileView === "form" ? "flex" : "hidden lg:flex"
         }`}>
-          {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200/60 mb-6 shrink-0 gap-1 sm:gap-2">
+          
+          {/* Section Selector Tabs styled with WeFive Emerald Theme */}
+          <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-100 mb-6 shrink-0 gap-1">
             <button
               onClick={() => setActiveTab("header")}
-              className={`pb-3 px-3.5 font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-2 transition ${
+              className={`flex-1 py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
                 activeTab === "header" 
-                  ? "border-[#f97316] text-[#f97316]" 
-                  : "border-transparent text-slate-400 hover:text-slate-600"
+                  ? "bg-emerald-800 text-white shadow-sm" 
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
               }`}
             >
-              <Heading className="h-4 w-4" />
-              Branding
+              <Heading className="h-3.5 w-3.5" />
+              Campaign
             </button>
             <button
               onClick={() => setActiveTab("products")}
-              className={`pb-3 px-3.5 font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-2 transition ${
+              className={`flex-1 py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
                 activeTab === "products" 
-                  ? "border-[#f97316] text-[#f97316]" 
-                  : "border-transparent text-slate-400 hover:text-slate-600"
+                  ? "bg-emerald-800 text-white shadow-sm" 
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
               }`}
             >
-              <ShoppingBag className="h-4 w-4" />
+              <ShoppingBag className="h-3.5 w-3.5" />
               Products ({products.length})
             </button>
             <button
               onClick={() => setActiveTab("footer")}
-              className={`pb-3 px-3.5 font-bold text-xs sm:text-sm flex items-center gap-1.5 border-b-2 transition ${
+              className={`flex-1 py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
                 activeTab === "footer" 
-                  ? "border-[#f97316] text-[#f97316]" 
-                  : "border-transparent text-slate-400 hover:text-slate-600"
+                  ? "bg-emerald-800 text-white shadow-sm" 
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
               }`}
             >
-              <MapPin className="h-4 w-4" />
-              Contacts
+              <MapPin className="h-3.5 w-3.5" />
+              Footer
             </button>
           </div>
 
-          {/* Form Content */}
+          {/* ACTIVE TAB CUSTOMIZERS */}
           <div className="grow space-y-6">
+            
+            {/* BRANDING & IDENTITY */}
             {activeTab === "header" && (
-              <div className="space-y-4">
-                <div className="rounded-3xl border border-slate-200/80 bg-linear-to-br from-white via-slate-50 to-white p-4 sm:p-5 shadow-[0_10px_30px_-15px_rgba(15,23,42,0.2)]">
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-400">Branding</p>
-                      <h3 className="mt-1 text-sm font-semibold text-slate-800">Header and brochure identity</h3>
-                    </div>
-                    <div className="rounded-full border border-orange-100 bg-orange-50 px-2.5 py-1 text-[10px] font-semibold text-orange-600">
-                      Modern layout
-                    </div>
+              <div className="space-y-5">
+                
+                {/* Visual Section Indicator Card */}
+                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex gap-3 text-xs text-emerald-800 items-start">
+                  <Info className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Flyer Header & Styling Details</p>
+                    <p className="mt-0.5 text-emerald-700/90 leading-relaxed">
+                      Customise primary headings, language badges, and core palette variables below. All changes propagate in real-time.
+                    </p>
                   </div>
+                </div>
 
-                  {/* Brochure Title Input (Full Width) */}
-                  <div className="mb-4">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Brochure Document Name</label>
+                <div className="space-y-4">
+                  {/* Campaign Title (Document Level) */}
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Brochure Campaign Title
+                    </label>
                     <input
                       type="text"
                       value={campaign.campaignTitle || ""}
                       onChange={(e) => setCampaign(prev => ({ ...prev, campaignTitle: e.target.value }))}
-                      placeholder="e.g. Weekend Offers Catalog"
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      placeholder="e.g. Tuesday Market Offer"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-slate-950 focus:outline-none focus:border-emerald-600 text-xs font-bold transition-all shadow-inner"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Company Name */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Company / Store Name</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Company / Store Name
+                    </label>
                     <input
                       type="text"
                       value={campaign.companyName}
                       onChange={(e) => setCampaign(prev => ({ ...prev, companyName: e.target.value }))}
-                      placeholder="e.g. Hypermarket LLC"
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      placeholder="e.g. WEFIVE HYPERMARKET"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-slate-950 focus:outline-none focus:border-emerald-600 text-xs font-extrabold tracking-wide uppercase transition-all shadow-inner"
                     />
-                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                      <input
-                        type="color"
-                        value={campaign.companyColor || campaign.textColor || "#1f2937"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, companyColor: e.target.value }))}
-                        className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.companyColor || campaign.textColor || "#1f2937"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, companyColor: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700"
-                      />
-                    </div>
                   </div>
 
+                  {/* Header Title */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Title</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Poster Header Title
+                    </label>
                     <input
                       type="text"
                       value={campaign.headerTitle || ""}
                       onChange={(e) => setCampaign(prev => ({ ...prev, headerTitle: e.target.value }))}
-                      placeholder="e.g. Super Savings"
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      placeholder="e.g. ചൊവ്വാ ചന്ത"
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-slate-950 focus:outline-none focus:border-emerald-600 text-sm font-black transition-all shadow-inner"
                     />
-                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                      <input
-                        type="color"
-                        value={campaign.headerTitleColor || campaign.themeColor || "#dc2626"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, headerTitleColor: e.target.value }))}
-                        className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.headerTitleColor || campaign.themeColor || "#dc2626"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, headerTitleColor: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700"
-                      />
-                    </div>
                   </div>
 
+                  {/* Header Subtitle */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Subtitle</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Poster Header Subtitle
+                    </label>
                     <input
                       type="text"
                       value={campaign.headerSubtitle || ""}
                       onChange={(e) => setCampaign(prev => ({ ...prev, headerSubtitle: e.target.value }))}
-                      placeholder="e.g. Limited time offers"
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                      placeholder="e.g. Tuesday Market savings"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-slate-950 focus:outline-none focus:border-emerald-600 text-xs font-semibold transition-all shadow-inner"
                     />
-                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                      <input
-                        type="color"
-                        value={campaign.headerSubtitleColor || campaign.accentColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, headerSubtitleColor: e.target.value }))}
-                        className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.headerSubtitleColor || campaign.accentColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, headerSubtitleColor: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700"
-                      />
-                    </div>
                   </div>
 
+                  {/* Header Badge text */}
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Badge</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Date Badge Text
+                    </label>
                     <input
                       type="text"
                       value={campaign.headerBadgeText || ""}
                       onChange={(e) => setCampaign(prev => ({ ...prev, headerBadgeText: e.target.value }))}
-                      placeholder="e.g. Valid till stock lasts"
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
-                    />
-                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                      <input
-                        type="color"
-                        value={campaign.headerBadgeColor || campaign.accentColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, headerBadgeColor: e.target.value }))}
-                        className="h-8 w-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.headerBadgeColor || campaign.accentColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, headerBadgeColor: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Offer Start Date</label>
-                    <input
-                      type="date"
-                      value={campaign.offerStartDate}
-                      onChange={(e) => setCampaign(prev => ({ ...prev, offerStartDate: e.target.value }))}
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm transition"
+                      placeholder="e.g. ONLY ON 16 JUNE 2026"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-slate-950 focus:outline-none focus:border-emerald-600 text-xs font-extrabold uppercase tracking-wide transition-all shadow-inner"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Offer End Date</label>
-                    <input
-                      type="date"
-                      value={campaign.offerEndDate}
-                      onChange={(e) => setCampaign(prev => ({ ...prev, offerEndDate: e.target.value }))}
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm transition"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Theme Color</label>
-                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
+                  {/* Date Ranges */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                        Start Date
+                      </label>
                       <input
-                        type="color"
-                        value={campaign.themeColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, themeColor: e.target.value, headerBgColor: e.target.value }))}
-                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
+                        type="date"
+                        value={campaign.offerStartDate}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, offerStartDate: e.target.value }))}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-bold transition-all shadow-inner"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                        End Date
+                      </label>
                       <input
-                        type="text"
-                        value={campaign.themeColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, themeColor: e.target.value, headerBgColor: e.target.value }))}
-                        placeholder="#facc15"
-                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                        type="date"
+                        value={campaign.offerEndDate}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, offerEndDate: e.target.value }))}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-bold transition-all shadow-inner"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Accent Color</label>
-                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
-                      <input
-                        type="color"
-                        value={campaign.accentColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, accentColor: e.target.value }))}
-                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.accentColor || "#facc15"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, accentColor: e.target.value }))}
-                        placeholder="#facc15"
-                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
-                      />
+                  {/* Theme Colors Sub-Grid */}
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    {/* Primary Theme Colour */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Theme Base Color
+                      </label>
+                      <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 border border-slate-200 rounded-lg shadow-inner">
+                        <input
+                          type="color"
+                          value={campaign.themeColor || "#065f46"}
+                          onChange={(e) => setCampaign(prev => ({ ...prev, themeColor: e.target.value, headerBgColor: e.target.value }))}
+                          className="h-6 w-6 border border-slate-200 rounded-md cursor-pointer bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={campaign.themeColor || "#065f46"}
+                          onChange={(e) => setCampaign(prev => ({ ...prev, themeColor: e.target.value, headerBgColor: e.target.value }))}
+                          className="w-full border-none bg-transparent text-[10px] font-mono font-bold uppercase text-slate-700 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Accent Color */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Gold / Accent Color
+                      </label>
+                      <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 border border-slate-200 rounded-lg shadow-inner">
+                        <input
+                          type="color"
+                          value={campaign.accentColor || "#facc15"}
+                          onChange={(e) => setCampaign(prev => ({ ...prev, accentColor: e.target.value }))}
+                          className="h-6 w-6 border border-slate-200 rounded-md cursor-pointer bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={campaign.accentColor || "#facc15"}
+                          onChange={(e) => setCampaign(prev => ({ ...prev, accentColor: e.target.value }))}
+                          className="w-full border-none bg-transparent text-[10px] font-mono font-bold uppercase text-slate-700 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Price Tag Highlight */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Price Color
+                      </label>
+                      <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 border border-slate-200 rounded-lg shadow-inner">
+                        <input
+                          type="color"
+                          value={campaign.priceColor || "#065f46"}
+                          onChange={(e) => setCampaign(prev => ({ ...prev, priceColor: e.target.value }))}
+                          className="h-6 w-6 border border-slate-200 rounded-md cursor-pointer bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={campaign.priceColor || "#065f46"}
+                          onChange={(e) => setCampaign(prev => ({ ...prev, priceColor: e.target.value }))}
+                          className="w-full border-none bg-transparent text-[10px] font-mono font-bold uppercase text-slate-700 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Currency selection */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Currency
+                      </label>
+                      <select
+                        value={campaign.currency || "INR"}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, currency: e.target.value }))}
+                        className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg shadow-inner text-xs font-bold text-slate-800 focus:outline-none"
+                      >
+                        <option value="INR">₹ (INR)</option>
+                        <option value="OMR">OMR (Omani Rial)</option>
+                        <option value="AED">AED (UAE Dirham)</option>
+                        <option value="USD">$ (US Dollar)</option>
+                        <option value="EUR">€ (Euro)</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Header Background</label>
-                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
-                      <input
-                        type="color"
-                        value={campaign.headerBgColor || campaign.themeColor || "#dc2626"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, headerBgColor: e.target.value }))}
-                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.headerBgColor || campaign.themeColor || "#dc2626"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, headerBgColor: e.target.value }))}
-                        placeholder="#dc2626"
-                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Footer Background</label>
-                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
-                      <input
-                        type="color"
-                        value={campaign.footerBgColor || "#1e293b"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, footerBgColor: e.target.value }))}
-                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.footerBgColor || "#1e293b"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, footerBgColor: e.target.value }))}
-                        placeholder="#1e293b"
-                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Text Color</label>
-                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
-                      <input
-                        type="color"
-                        value={campaign.textColor || "#1f2937"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, textColor: e.target.value }))}
-                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.textColor || "#1f2937"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, textColor: e.target.value }))}
-                        placeholder="#1f2937"
-                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Price Color</label>
-                    <div className="flex gap-3 items-center border border-slate-200 rounded-xl bg-slate-50 p-3">
-                      <input
-                        type="color"
-                        value={campaign.priceColor || campaign.themeColor || "#dc2626"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, priceColor: e.target.value }))}
-                        className="h-10 w-10 border border-slate-200 rounded-lg cursor-pointer bg-transparent shrink-0"
-                      />
-                      <input
-                        type="text"
-                        value={campaign.priceColor || campaign.themeColor || "#dc2626"}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, priceColor: e.target.value }))}
-                        placeholder="#dc2626"
-                        className="grow px-3.5 py-2.5 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Currency Type</label>
-                    <select
-                      value={campaign.currency || "OMR"}
-                      onChange={(e) => setCampaign(prev => ({ ...prev, currency: e.target.value }))}
-                      className="w-full px-3.5 py-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm font-medium transition"
-                    >
-                      <option value="OMR">OMR (Omani Rial)</option>
-                      <option value="AED">AED (UAE Dirham)</option>
-                      <option value="USD">USD (US Dollar)</option>
-                      <option value="INR">INR (Indian Rupee)</option>
-                      <option value="QAR">QAR (Qatari Riyal)</option>
-                      <option value="SAR">SAR (Saudi Riyal)</option>
-                      <option value="BHD">BHD (Bahraini Dinar)</option>
-                      <option value="KWD">KWD (Kuwaiti Dinar)</option>
-                      <option value="EUR">EUR (Euro)</option>
-                      <option value="GBP">GBP (British Pound)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Brochure Pages</label>
-                    <select
-                      value={campaign.brochurePages || 2}
-                      onChange={(e) => setCampaign(prev => ({ ...prev, brochurePages: parseInt(e.target.value) || 2 }))}
-                      className="w-full px-3.5 py-4 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm font-medium transition"
-                    >
-                      <option value={1}>1 Page</option>
-                      <option value={2}>2 Pages</option>
-                      <option value={3}>3 Pages</option>
-                      <option value={4}>4 Pages</option>
-                    </select>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Store Logo</label>
-                    <div className="flex items-center gap-4 border border-slate-200 rounded-xl bg-slate-50 p-4">
-                      <div className="h-16 w-16 bg-white border border-slate-200 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                  {/* Logo Upload Section */}
+                  <div className="border border-slate-200 rounded-xl bg-slate-50 p-4 mt-3">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Store / Brand Logo</label>
+                    <div className="flex items-center gap-3">
+                      <div className="h-14 w-14 bg-white border border-slate-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
                         {campaign.logoUrl ? (
-                          <img src={campaign.logoUrl} alt="Logo" className="max-h-full max-w-full object-contain p-1" />
+                          <img src={campaign.logoUrl} alt="Logo" className="max-h-[90%] max-w-[90%] object-contain" />
                         ) : (
-                          <Plus className="h-5 w-5 text-slate-300" />
+                          <ImageIcon className="h-5 w-5 text-slate-300" />
                         )}
                       </div>
-                      <div className="grow">
-                        <label className="cursor-pointer bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 transition inline-block">
+                      <div className="grow flex flex-wrap gap-2 items-center">
+                        <label className="cursor-pointer bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 transition">
                           Upload Custom Logo
                           <input
                             type="file"
@@ -672,90 +637,362 @@ function CampaignEditor() {
                             className="hidden"
                           />
                         </label>
-                        <p className="text-[10px] text-slate-400 mt-1.5 font-bold">PNG or JPEG format. Square size works best.</p>
+                        {(campaign.rawLogoUrl || campaign.logoUrl) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRawImage(campaign.rawLogoUrl || campaign.logoUrl);
+                              setCropScale(1);
+                              setCropOffsetX(0);
+                              setCropOffsetY(0);
+                              setShowCropper(true);
+                            }}
+                            className="bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-800 transition"
+                          >
+                            Resize Logo
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
+
                 </div>
               </div>
             )}
 
+            {/* PRODUCT DEALS EDITOR */}
             {activeTab === "products" && (
-              <ProductForm 
-                products={products}
-                onChange={setProducts}
-              />
+              <div className="space-y-4">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-inner">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">Products Per Page Limit (First Page)</h4>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define maximum items on Page 1. Subsequent pages automatically fit 5 more items (no header).</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="25"
+                      value={campaign.productsPerPage || 15}
+                      onChange={(e) => {
+                        const val = Math.min(25, Math.max(1, parseInt(e.target.value) || 15));
+                        setCampaign(prev => ({ 
+                          ...prev, 
+                          productsPerPage: val,
+                          productsPerPageSubsequent: val + 5 
+                        }));
+                      }}
+                      className="w-20 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-center text-slate-800 bg-white focus:outline-none focus:border-emerald-600 transition"
+                    />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Items / Page</span>
+                  </div>
+                </div>
+
+                <ProductForm 
+                  products={products}
+                  onChange={setProducts}
+                  productsPerPage={campaign.productsPerPage}
+                  productsPerPageSubsequent={campaign.productsPerPageSubsequent}
+                />
+              </div>
             )}
 
+            {/* FOOTER & ADDRESS CHANNELS */}
             {activeTab === "footer" && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                
+                {/* Custom Footer Brand Logo */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Custom Footer Brand Logo
+                  </label>
+                  <div className="flex items-center gap-4 border border-slate-200 rounded-xl bg-slate-50 p-4">
+                    <div className="h-16 w-16 bg-white border border-slate-200 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                      {campaign.footerLogoUrl ? (
+                        <img src={campaign.footerLogoUrl} alt="Footer Logo" className="max-h-full max-w-full object-contain p-1" />
+                      ) : (
+                        <Plus className="h-5 w-5 text-slate-300" />
+                      )}
+                    </div>
+                    <div className="grow flex flex-wrap gap-2 items-center">
+                      <label className="cursor-pointer bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 transition inline-block">
+                        Upload Footer Logo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleLogoUpload(e, "footerLogo")}
+                          className="hidden"
+                        />
+                      </label>
+                      {(campaign.rawFooterLogoUrl || campaign.footerLogoUrl) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRawImage(campaign.rawFooterLogoUrl || campaign.footerLogoUrl);
+                            setCroppingTarget("footerLogo");
+                            setCropScale(1);
+                            setCropOffsetX(0);
+                            setCropOffsetY(0);
+                            setShowCropper(true);
+                          }}
+                          className="bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold text-[#f97316] hover:text-[#ea580c] transition cursor-pointer"
+                        >
+                          Adjust Layout
+                        </button>
+                      )}
+                      <p className="text-[10px] text-slate-400 w-full mt-1.5 font-semibold">Square or landscape logo works best.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Text Logo Brand inputs */}
+                {!campaign.footerLogoUrl && (
+                  <div className="grid grid-cols-3 gap-2 border border-slate-200 rounded-xl bg-slate-50 p-4">
+                    <div className="col-span-3 text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-0.5">
+                      Footer Text Logo Branding
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Logo Part 1
+                      </label>
                       <input
                         type="text"
-                        value={campaign.phone}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, phone: e.target.value }))}
-                        placeholder="+968 9000 0000"
-                        className="w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
+                        value={campaign.footerBrandName1 || ""}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, footerBrandName1: e.target.value }))}
+                        placeholder="We"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Logo Part 2
+                      </label>
+                      <input
+                        type="text"
+                        value={campaign.footerBrandName2 || ""}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, footerBrandName2: e.target.value }))}
+                        placeholder="Five"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                        Logo Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={campaign.footerBrandSub || ""}
+                        onChange={(e) => setCampaign(prev => ({ ...prev, footerBrandSub: e.target.value }))}
+                        placeholder="HYPERMARKET"
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
                       />
                     </div>
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">WhatsApp Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                      <input
-                        type="text"
-                        value={campaign.whatsapp}
-                        onChange={(e) => setCampaign(prev => ({ ...prev, whatsapp: e.target.value }))}
-                        placeholder="+968 9000 0000"
-                        className="w-full pl-10 pr-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Store Address / Details</label>
-                    <textarea
-                      value={campaign.footerAddress}
-                      onChange={(e) => setCampaign(prev => ({ ...prev, footerAddress: e.target.value }))}
-                      placeholder="e.g. Oman Branch, Muscat City Center, Ground Floor"
-                      rows={2}
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium resize-none transition"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Terms & Conditions / Disclaimer</label>
-                    <textarea
-                      value={campaign.terms}
-                      onChange={(e) => setCampaign(prev => ({ ...prev, terms: e.target.value }))}
-                      placeholder="e.g. Terms and conditions apply. Promotion valid until stock lasts."
-                      rows={2}
-                      className="w-full px-3.5 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:outline-none focus:border-[#f97316] text-sm placeholder-slate-400 font-medium resize-none transition"
+                {/* Store Phone */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Store Contact Phone
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={campaign.phone}
+                      onChange={(e) => setCampaign(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+91 8086313300"
+                      className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
                     />
                   </div>
                 </div>
+
+                {/* WhatsApp */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    WhatsApp Hotline
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={campaign.whatsapp}
+                      onChange={(e) => setCampaign(prev => ({ ...prev, whatsapp: e.target.value }))}
+                      placeholder="+91 8943313300"
+                      className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Store Name / Address Header */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Store Name (Address Header)
+                  </label>
+                  <input
+                    type="text"
+                    value={campaign.companyName || ""}
+                    onChange={(e) => setCampaign(prev => ({ ...prev, companyName: e.target.value }))}
+                    placeholder="e.g. WEFIVE HYPERMARKET"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
+                  />
+                </div>
+
+                {/* Store Location */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Physical Store Address
+                  </label>
+                  <textarea
+                    value={campaign.footerAddress}
+                    onChange={(e) => setCampaign(prev => ({ ...prev, footerAddress: e.target.value }))}
+                    placeholder="e.g. # CHERUTHURUTHY CHUNGAM, THRISSUR 679531"
+                    rows={2}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600 transition resize-none leading-relaxed shadow-inner"
+                  />
+                </div>
+
+                {/* Offer Terms */}
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    Legal / Campaign Disclaimer
+                  </label>
+                  <textarea
+                    value={campaign.terms}
+                    onChange={(e) => setCampaign(prev => ({ ...prev, terms: e.target.value }))}
+                    placeholder="e.g. Bulk purchase not allowed. Offer valid till stock last."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600 transition resize-none leading-relaxed shadow-inner"
+                  />
+                </div>
+
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Side: Visual Brochure Preview Panel */}
-        <div className={`min-h-0 bg-[#f1f1f3] p-4 sm:p-6 flex flex-col overflow-hidden ${
+        {/* RIGHT VISUAL PREVIEW DISPLAY AREA */}
+        <div className={`min-h-0 bg-[#f1f1f3] p-4 sm:p-6 flex flex-col overflow-hidden items-center justify-center ${
           mobileView === "preview" ? "flex" : "hidden lg:flex"
         }`}>
-          <BrochurePreview 
-            campaign={campaign}
-            products={products}
-          />
+          
+          <div className="w-full h-full max-w-[800px] flex flex-col justify-between">
+            <BrochurePreview 
+              campaign={campaign}
+              products={products}
+            />
+          </div>
+          
         </div>
       </div>
+
+      {/* Dynamic Canvas Logo Cropper Backdrop-Blur Modal */}
+      {showCropper && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl flex flex-col items-center">
+            
+            <div className="text-center mb-4">
+              <span className="bg-emerald-100 text-emerald-800 font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                WeFive Layout Engine
+              </span>
+              <h3 className="text-sm font-black text-slate-900 mt-1">Adjust Brand Logo Fitting</h3>
+            </div>
+            
+            <div className="bg-slate-950 p-6 rounded-2xl border border-slate-900 flex justify-center items-center shadow-inner relative overflow-hidden w-full h-[180px]">
+              <canvas 
+                ref={previewCanvasRef} 
+                width={200}
+                height={200}
+                className="bg-white rounded-xl shadow-lg border border-white/20"
+                style={{
+                  width: '130px',
+                  height: '130px'
+                }}
+              />
+            </div>
+            
+            <div className="w-full mt-6 space-y-4">
+              {/* Zoom Slider */}
+              <div>
+                <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  <span>Logo Zoom Scale</span>
+                  <span>{Math.round(cropScale * 100)}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0.1" 
+                  max="3" 
+                  step="0.05"
+                  value={cropScale}
+                  onChange={(e) => setCropScale(parseFloat(e.target.value))}
+                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-800"
+                />
+              </div>
+              
+              {/* Horizontal Offset Slider */}
+              <div>
+                <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  <span>Horizontal Align</span>
+                  <span>{cropOffsetX}px</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="-150" 
+                  max="150" 
+                  step="1"
+                  value={cropOffsetX}
+                  onChange={(e) => setCropOffsetX(parseInt(e.target.value))}
+                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-800"
+                />
+              </div>
+              
+              {/* Vertical Offset Slider */}
+              <div>
+                <div className="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  <span>Vertical Align</span>
+                  <span>{cropOffsetY}px</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="-150" 
+                  max="150" 
+                  step="1"
+                  value={cropOffsetY}
+                  onChange={(e) => setCropOffsetY(parseInt(e.target.value))}
+                  className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-800"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3 w-full mt-6">
+              <button
+                type="button"
+                onClick={() => setShowCropper(false)}
+                className="flex-1 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (previewCanvasRef.current) {
+                    const dataUrl = previewCanvasRef.current.toDataURL("image/png");
+                    if (croppingTarget === "headerLogo") {
+                      setCampaign(prev => ({ ...prev, logoUrl: dataUrl }));
+                    } else {
+                      setCampaign(prev => ({ ...prev, footerLogoUrl: dataUrl }));
+                    }
+                  }
+                  setShowCropper(false);
+                }}
+                className="flex-1 py-2.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md"
+              >
+                Lock Placement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

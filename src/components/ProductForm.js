@@ -3,8 +3,14 @@
 import { useState } from "react";
 import { Plus, Trash2, ArrowUp, ArrowDown, Edit2, Check, X, Image as ImageIcon } from "lucide-react";
 
-export default function ProductForm({ products, onChange }) {
+export default function ProductForm({ 
+  products, 
+  onChange, 
+  productsPerPage = 15, 
+  productsPerPageSubsequent = 20 
+}) {
   const [editingId, setEditingId] = useState(null);
+  const [selectedViewPage, setSelectedViewPage] = useState(1);
   const [form, setForm] = useState({
     productName: "",
     quantity: "",
@@ -33,6 +39,8 @@ export default function ProductForm({ products, onChange }) {
       return;
     }
 
+    const maxCapacity = productsPerPage + productsPerPageSubsequent;
+
     if (editingId) {
       // Update existing
       const updated = products.map(p => 
@@ -43,6 +51,12 @@ export default function ProductForm({ products, onChange }) {
       onChange(updated);
       setEditingId(null);
     } else {
+      // Enforce brochure-wide products capacity limit check
+      if (products.length >= maxCapacity) {
+        alert(`Maximum brochure layout capacity of ${maxCapacity} products (2 pages limit) has been reached! Please edit or delete existing items first.`);
+        return;
+      }
+
       // Create new
       const newProduct = {
         id: Math.random().toString(36).substring(2, 9),
@@ -100,6 +114,39 @@ export default function ProductForm({ products, onChange }) {
     reordered[nextIndex] = temp;
     onChange(reordered);
   };
+
+  const getProductPages = () => {
+    const pageGroups = [];
+    if (products.length === 0) {
+      return [];
+    }
+    
+    // Page 1 gets up to productsPerPage
+    const page1Products = products.slice(0, productsPerPage).map((p, idx) => ({ ...p, originalIndex: idx, pageNum: 1 }));
+    if (page1Products.length > 0) {
+      pageGroups.push({ pageNum: 1, products: page1Products });
+    }
+    
+    let remaining = products.slice(productsPerPage);
+    let currentPageNum = 2;
+    while (remaining.length > 0) {
+      const group = remaining.slice(0, productsPerPageSubsequent).map((p, idx) => ({
+        ...p,
+        originalIndex: productsPerPage + (currentPageNum - 2) * productsPerPageSubsequent + idx,
+        pageNum: currentPageNum
+      }));
+      pageGroups.push({ pageNum: currentPageNum, products: group });
+      remaining = remaining.slice(productsPerPageSubsequent);
+      currentPageNum++;
+    }
+    return pageGroups;
+  };
+  
+  const pageGroups = getProductPages();
+  const maxAvailablePage = pageGroups.length > 0 ? pageGroups.length : 1;
+  const activePage = Math.min(selectedViewPage, maxAvailablePage);
+  const activeGroup = pageGroups.find(g => g.pageNum === activePage) || { products: [] };
+  const productsToRender = activeGroup.products;
 
   return (
     <div className="space-y-6">
@@ -212,13 +259,28 @@ export default function ProductForm({ products, onChange }) {
           </div>
         </div>
 
+        {(!editingId && products.length >= (productsPerPage + productsPerPageSubsequent)) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[10px] text-amber-800 font-semibold flex items-center gap-1.5 shadow-2xs">
+            <span>⚠️ Maximum layout capacity of {productsPerPage + productsPerPageSubsequent} items (2 pages limit) has been reached. Please edit or delete existing items to add more.</span>
+          </div>
+        )}
+
         <button
           type="submit"
-          className="w-full py-3 bg-[#f97316] hover:bg-[#ea580c] rounded-xl text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+          disabled={!editingId && products.length >= (productsPerPage + productsPerPageSubsequent)}
+          className={`w-full py-3 rounded-xl text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
+            (!editingId && products.length >= (productsPerPage + productsPerPageSubsequent))
+              ? "bg-slate-350 cursor-not-allowed opacity-75"
+              : "bg-[#f97316] hover:bg-[#ea580c]"
+          }`}
         >
           {editingId ? (
             <>
               <Check className="h-4 w-4" /> Save Updated Details
+            </>
+          ) : products.length >= (productsPerPage + productsPerPageSubsequent) ? (
+            <>
+              Limit Reached (Max {productsPerPage + productsPerPageSubsequent} Items)
             </>
           ) : (
             <>
@@ -230,7 +292,35 @@ export default function ProductForm({ products, onChange }) {
 
       {/* Product List */}
       <div className="space-y-3">
-        <h4 className="font-bold text-sm text-slate-800">Added Brochure Items ({products.length})</h4>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h4 className="font-bold text-sm text-slate-800">Added Brochure Items ({products.length})</h4>
+          {pageGroups.length > 1 && (
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Page {activePage} of {pageGroups.length}
+            </span>
+          )}
+        </div>
+
+        {/* Page Pagination Selector */}
+        {pageGroups.length > 1 && (
+          <div className="flex flex-wrap items-center gap-1.5 pb-1">
+            {pageGroups.map(group => (
+              <button
+                key={group.pageNum}
+                type="button"
+                onClick={() => setSelectedViewPage(group.pageNum)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition duration-150 cursor-pointer ${
+                  activePage === group.pageNum 
+                    ? "bg-[#f97316] text-white shadow-xs" 
+                    : "bg-slate-100 hover:bg-slate-200 text-slate-650"
+                }`}
+              >
+                Page {group.pageNum} ({group.products.length})
+              </button>
+            ))}
+          </div>
+        )}
+
         {products.length === 0 ? (
           <div className="text-xs text-slate-400 font-medium bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8 text-center flex flex-col items-center justify-center gap-2">
             <ImageIcon className="h-7 w-7 text-slate-300" />
@@ -238,7 +328,7 @@ export default function ProductForm({ products, onChange }) {
           </div>
         ) : (
           <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
-            {products.map((product, index) => (
+            {productsToRender.map((product) => (
               <div 
                 key={product.id}
                 className="bg-white border border-slate-200/80 rounded-xl p-3 flex items-center justify-between gap-3 text-slate-700 hover:shadow-2xs transition duration-150"
@@ -247,16 +337,16 @@ export default function ProductForm({ products, onChange }) {
                   <div className="flex flex-col gap-1 shrink-0">
                     <button
                       type="button"
-                      disabled={index === 0}
-                      onClick={() => moveProduct(index, -1)}
+                      disabled={product.originalIndex === 0}
+                      onClick={() => moveProduct(product.originalIndex, -1)}
                       className="text-slate-400 hover:text-slate-650 disabled:opacity-30 cursor-pointer"
                     >
                       <ArrowUp className="h-3.5 w-3.5" />
                     </button>
                     <button
                       type="button"
-                      disabled={index === products.length - 1}
-                      onClick={() => moveProduct(index, 1)}
+                      disabled={product.originalIndex === products.length - 1}
+                      onClick={() => moveProduct(product.originalIndex, 1)}
                       className="text-slate-400 hover:text-slate-650 disabled:opacity-30 cursor-pointer"
                     >
                       <ArrowDown className="h-3.5 w-3.5" />
@@ -281,7 +371,7 @@ export default function ProductForm({ products, onChange }) {
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-450 font-bold">
+                  <p className="text-[10px] text-slate-455 font-bold">
                     {product.quantity || "No size"} •{" "}
                     <span className="text-slate-900">OMR {Number(product.offerPrice).toFixed(3)}</span>
                     {product.oldPrice && (
@@ -291,6 +381,9 @@ export default function ProductForm({ products, onChange }) {
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-[9px] font-bold text-slate-400 bg-slate-50 border border-slate-200/60 rounded-md px-1.5 py-0.5 mr-1 select-none">
+                    P.{product.pageNum}
+                  </span>
                   <button
                     type="button"
                     onClick={() => handleEdit(product)}

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth-service";
 import { dbService } from "@/lib/db-service";
+import { seedDynamicTemplate } from "@/lib/seed-template";
 import { 
   Plus, 
   LogOut, 
@@ -147,6 +148,9 @@ export default function DashboardPage() {
 
   const loadCampaigns = async (userId) => {
     try {
+      // Seed dynamic templates in database if not present
+      await seedDynamicTemplate();
+
       const [data, tpls] = await Promise.all([
         dbService.getCampaigns(userId),
         dbService.getTemplates()

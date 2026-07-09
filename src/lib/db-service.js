@@ -226,6 +226,23 @@ export const dbService = {
 
   // --- TEMPLATES ---
 
+  async getTemplate(templateId) {
+    return runFirestore(
+      async () => {
+        const docRef = doc(db, "templates", templateId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          return { id: docSnap.id, ...docSnap.data() };
+        }
+        return null;
+      },
+      async () => {
+        const local = getLocalData("flowbee_templates");
+        return local.find(t => t.id === templateId) || null;
+      }
+    );
+  },
+
   async getTemplates() {
     const seedDefault = async () => {
       const defaultTemplates = [
@@ -272,12 +289,18 @@ export const dbService = {
             docs.push(weFive);
           }
         }
-        return docs.filter(t => t.id === "wefive_tuesday_market");
+        return docs.filter(t => t.status === "active");
       },
       async () => {
         const defaults = await seedDefault();
-        setLocalData("flowbee_templates", defaults);
-        return defaults;
+        const local = getLocalData("flowbee_templates");
+        const all = [...defaults];
+        for (const t of local) {
+          if (!all.some(x => x.id === t.id)) {
+            all.push(t);
+          }
+        }
+        return all.filter(t => t.status === "active");
       }
     );
   },

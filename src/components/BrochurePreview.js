@@ -3,11 +3,13 @@
 import { useEffect, useState, useRef } from "react";
 import { generateBrochureHtml } from "@/lib/pdf-template";
 import { Eye, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { dbService } from "@/lib/db-service";
 
 export default function BrochurePreview({ campaign, products }) {
   const [htmlContent, setHtmlContent] = useState("");
   const [scale, setScale] = useState(0.4); // Default scale factor
   const [isManualScale, setIsManualScale] = useState(false);
+  const [customTemplate, setCustomTemplate] = useState(null);
   const containerRef = useRef(null);
   const frameAreaRef = useRef(null);
 
@@ -55,9 +57,27 @@ export default function BrochurePreview({ campaign, products }) {
   }, [products, campaign, isManualScale, numPages]);
 
   useEffect(() => {
-    const html = generateBrochureHtml(campaign, products);
+    let active = true;
+    const loadCustomTemplate = async () => {
+      if (campaign.templateId && campaign.templateId !== "wefive_tuesday_market" && campaign.templateId !== "default_template") {
+        try {
+          const t = await dbService.getTemplate(campaign.templateId);
+          if (active) setCustomTemplate(t);
+        } catch (e) {
+          console.error("Failed to load custom template in preview:", e);
+        }
+      } else {
+        if (active) setCustomTemplate(null);
+      }
+    };
+    loadCustomTemplate();
+    return () => { active = false; };
+  }, [campaign.templateId]);
+
+  useEffect(() => {
+    const html = generateBrochureHtml(campaign, products, customTemplate);
     setHtmlContent(html);
-  }, [campaign, products]);
+  }, [campaign, products, customTemplate]);
 
   return (
     <div

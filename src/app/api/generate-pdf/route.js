@@ -4,14 +4,24 @@ import { generateBrochureHtml } from "@/lib/pdf-template";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { campaign, products } = body;
+    const { campaign, products, customTemplate } = body;
 
     if (!campaign) {
       return NextResponse.json({ error: "Campaign data is required" }, { status: 400 });
     }
 
+    let resolvedTemplate = customTemplate || null;
+    if (!resolvedTemplate && campaign.templateId && campaign.templateId !== "wefive_tuesday_market" && campaign.templateId !== "default_template") {
+      try {
+        const { dbService } = await import("@/lib/db-service");
+        resolvedTemplate = await dbService.getTemplate(campaign.templateId);
+      } catch (e) {
+        console.error("Failed to resolve dynamic template on backend:", e);
+      }
+    }
+
     // Generate the raw flyer HTML
-    const htmlContent = generateBrochureHtml(campaign, products);
+    const htmlContent = generateBrochureHtml(campaign, products, resolvedTemplate);
 
     // Launch browser dynamically based on the environment (Vercel vs Local)
     let browser;

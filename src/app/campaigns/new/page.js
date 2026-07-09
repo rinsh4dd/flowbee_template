@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/lib/auth-service";
 import { dbService } from "@/lib/db-service";
+import { seedDynamicTemplate } from "@/lib/seed-template";
 import ProductForm from "@/components/ProductForm";
 import BrochurePreview from "@/components/BrochurePreview";
 import { 
@@ -96,6 +97,9 @@ function CampaignEditor() {
         router.push("/login");
       } else {
         setUser(currentUser);
+        // Seed dynamic test template from Firebase/LocalStorage
+        seedDynamicTemplate();
+
         if (campaignId) {
           loadCampaignData(campaignId);
         } else {

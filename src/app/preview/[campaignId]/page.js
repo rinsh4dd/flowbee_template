@@ -16,6 +16,7 @@ function CampaignPreviewPage() {
 
   const [campaign, setCampaign] = useState(null);
   const [products, setProducts] = useState([]);
+  const [customTemplate, setCustomTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [htmlContent, setHtmlContent] = useState("");
   const [downloading, setDownloading] = useState(false);
@@ -65,8 +66,18 @@ function CampaignPreviewPage() {
         const prodList = await dbService.getProducts(id);
         setProducts(prodList);
         
+        let fetchedTemplate = null;
+        if (camp.templateId && camp.templateId !== "wefive_tuesday_market" && camp.templateId !== "default_template") {
+          try {
+            fetchedTemplate = await dbService.getTemplate(camp.templateId);
+            setCustomTemplate(fetchedTemplate);
+          } catch (e) {
+            console.error("Failed to fetch custom template:", e);
+          }
+        }
+        
         // Generate and set brochure HTML
-        const html = generateBrochureHtml(camp, prodList);
+        const html = generateBrochureHtml(camp, prodList, fetchedTemplate);
         setHtmlContent(html);
       } else {
         alert("Campaign not found");
@@ -91,6 +102,7 @@ function CampaignPreviewPage() {
         body: JSON.stringify({
           campaign,
           products,
+          customTemplate,
         }),
       });
 

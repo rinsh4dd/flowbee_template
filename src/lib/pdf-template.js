@@ -7,6 +7,68 @@ const TEMPLATE_REGISTRY = {
   default_template: DefaultBrochureTemplate,
 };
 
+export function interpolate(templateString, data) {
+  if (!templateString) return "";
+  let result = templateString;
+  // Replace conditional block checks like {{#badgeText}}...{{/badgeText}}
+  result = result.replace(/\{\{\s*#(\w+)\s*\}\}([\s\S]*?)\{\{\s*\/(\w+)\s*\}\}/g, (match, key, content) => {
+    return data[key] ? content : "";
+  });
+  // Replace tag placeholders
+  return result.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (match, key) => {
+    const parts = key.split(".");
+    let current = data;
+    for (const part of parts) {
+      if (current === null || current === undefined) return "";
+      current = current[part];
+    }
+    return current !== undefined && current !== null ? String(current) : "";
+  });
+}
+
+export function makeDynamicTemplate(templateDoc) {
+  if (!templateDoc) return null;
+  return {
+    defaultProductsPerPage: parseInt(templateDoc.defaultProductsPerPage) || 15,
+    renderHeader(campaign, pageNum, totalPages) {
+      return interpolate(templateDoc.headerHtml, {
+        ...campaign,
+        pageNum,
+        totalPages
+      });
+    },
+    renderProductCard(product, currency) {
+      return interpolate(templateDoc.productCardHtml, {
+        ...product,
+        currency,
+        formattedOfferPrice: Number(product.offerPrice || 0).toFixed(3),
+        formattedOldPrice: product.oldPrice ? Number(product.oldPrice).toFixed(3) : ""
+      });
+    },
+    renderFooter(campaign, qrCodeSrc, pageNum, totalPages) {
+      return interpolate(templateDoc.footerHtml, {
+        ...campaign,
+        qrCodeSrc,
+        pageNum,
+        totalPages
+      });
+    },
+    renderPageOverlay() {
+      return templateDoc.renderPageOverlay || "";
+    },
+    css(themeColor, campaign) {
+      return interpolate(templateDoc.css, {
+        themeColor,
+        headerBgColor: campaign.headerBgColor || themeColor,
+        accentColor: campaign.accentColor || "#facc15",
+        footerBgColor: campaign.footerBgColor || "#1e293b",
+        textColor: campaign.textColor || "#1f2937",
+        priceColor: campaign.priceColor || themeColor
+      });
+    }
+  };
+}
+
 /**
  * Resolves the active template configuration.
  */
@@ -18,9 +80,14 @@ export function getTemplate(templateId) {
  * Main Layout Generator.
  * Compiles campaign and products schema into dynamic A4 A-grade print layout.
  */
-export function generateBrochureHtml(campaign, products = []) {
+export function generateBrochureHtml(campaign, products = [], customTemplate = null) {
   const templateId = campaign.templateId || "wefive_tuesday_market";
-  const template = getTemplate(templateId);
+  let template = getTemplate(templateId);
+  if (customTemplate) {
+    template = typeof customTemplate.renderHeader === "function"
+      ? customTemplate
+      : makeDynamicTemplate(customTemplate);
+  }
 
   // Theme Color Configurations (Dynamic based on selected template)
   const themeColor =
@@ -89,10 +156,11 @@ export function generateBrochureHtml(campaign, products = []) {
             return "";
           }
           if (sectionId === "products") {
+            const countClass = `count-${page.products.length}`;
             const gridClass =
               templateId === "wefive_tuesday_market"
-                ? "grid-container wefive-grid"
-                : "grid-container";
+                ? `grid-container wefive-grid ${countClass}`
+                : `grid-container ${countClass}`;
             return `
           <div class="${gridClass}">
             ${page.products.map((p) => template.renderProductCard(p, currency)).join("")}

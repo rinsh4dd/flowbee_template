@@ -4,7 +4,7 @@ import { DefaultBrochureTemplate } from "./templates/default-template";
 // Template registry mapping
 const TEMPLATE_REGISTRY = {
   wefive_tuesday_market: WeFiveTuesdayMarketTemplate,
-  default_template: DefaultBrochureTemplate
+  default_template: DefaultBrochureTemplate,
 };
 
 /**
@@ -23,12 +23,18 @@ export function generateBrochureHtml(campaign, products = []) {
   const template = getTemplate(templateId);
 
   // Theme Color Configurations (Dynamic based on selected template)
-  const themeColor = campaign.themeColor || (templateId === "wefive_tuesday_market" ? "#065f46" : "#dc2626");
+  const themeColor =
+    campaign.themeColor ||
+    (templateId === "wefive_tuesday_market" ? "#065f46" : "#dc2626");
 
   // Distribute products sequentially based on first page vs subsequent page limits
-  const firstPageLimit = parseInt(campaign.productsPerPage) || template.defaultProductsPerPage;
-  const subsequentPageLimit = parseInt(campaign.productsPerPageSubsequent) || 
-    (templateId === "wefive_tuesday_market" ? firstPageLimit + 5 : firstPageLimit);
+  const firstPageLimit =
+    parseInt(campaign.productsPerPage) || template.defaultProductsPerPage;
+  const subsequentPageLimit =
+    parseInt(campaign.productsPerPageSubsequent) ||
+    (templateId === "wefive_tuesday_market"
+      ? firstPageLimit + 5
+      : firstPageLimit);
   const pages = [];
 
   if (products.length === 0) {
@@ -38,7 +44,7 @@ export function generateBrochureHtml(campaign, products = []) {
     const page1Products = products.slice(0, firstPageLimit);
     pages.push({
       pageNumber: 1,
-      products: page1Products
+      products: page1Products,
     });
 
     // Subsequent pages get up to subsequentPageLimit
@@ -48,7 +54,7 @@ export function generateBrochureHtml(campaign, products = []) {
       const pageProducts = remainingProducts.slice(0, subsequentPageLimit);
       pages.push({
         pageNumber: pageNum,
-        products: pageProducts
+        products: pageProducts,
       });
       remainingProducts = remainingProducts.slice(subsequentPageLimit);
       pageNum++;
@@ -56,49 +62,71 @@ export function generateBrochureHtml(campaign, products = []) {
   }
 
   // Generate WhatsApp link or Fallback URL inside QR Code
-  const qrCodeSrc = campaign.qrCodeUrl || 
+  const qrCodeSrc =
+    campaign.qrCodeUrl ||
     `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-      campaign.whatsapp ? `https://wa.me/${campaign.whatsapp.replace(/\D/g, "")}` : `https://flowbee-templates.vercel.app`
+      campaign.whatsapp
+        ? `https://wa.me/${campaign.whatsapp.replace(/\D/g, "")}`
+        : `https://flowbee-templates.vercel.app`,
     )}`;
 
   // Compile full page templates list
   const currency = campaign.currency || "OMR";
   const layoutOrder = campaign.layoutOrder || ["header", "products", "footer"];
 
-  const renderedPagesHtml = pages.map((page) => {
-    const sectionsHtml = layoutOrder.map(sectionId => {
-      if (sectionId === "header") {
-        if (page.pageNumber === 1) {
-          return template.renderHeader(campaign, page.pageNumber, pages.length);
-        }
-        return "";
-      }
-      if (sectionId === "products") {
-        const gridClass = templateId === "wefive_tuesday_market" ? "grid-container wefive-grid" : "grid-container";
-        return `
+  const renderedPagesHtml = pages
+    .map((page) => {
+      const sectionsHtml = layoutOrder
+        .map((sectionId) => {
+          if (sectionId === "header") {
+            if (page.pageNumber === 1) {
+              return template.renderHeader(
+                campaign,
+                page.pageNumber,
+                pages.length,
+              );
+            }
+            return "";
+          }
+          if (sectionId === "products") {
+            const gridClass =
+              templateId === "wefive_tuesday_market"
+                ? "grid-container wefive-grid"
+                : "grid-container";
+            return `
           <div class="${gridClass}">
-            ${page.products.map(p => template.renderProductCard(p, currency)).join("")}
+            ${page.products.map((p) => template.renderProductCard(p, currency)).join("")}
           </div>
         `;
-      }
-      if (sectionId === "footer") {
-        return template.renderFooter(campaign, qrCodeSrc, page.pageNumber, pages.length);
-      }
-      return "";
-    }).join("");
+          }
+          if (sectionId === "footer") {
+            return template.renderFooter(
+              campaign,
+              qrCodeSrc,
+              page.pageNumber,
+              pages.length,
+            );
+          }
+          return "";
+        })
+        .join("");
 
-    const pageClass = templateId === "wefive_tuesday_market" 
-      ? "page-container wefive-page-container" 
-      : "page-container";
-    const overlayHtml = template.renderPageOverlay ? template.renderPageOverlay() : "";
+      const pageClass =
+        templateId === "wefive_tuesday_market"
+          ? "page-container wefive-page-container"
+          : "page-container";
+      const overlayHtml = template.renderPageOverlay
+        ? template.renderPageOverlay()
+        : "";
 
-    return `
+      return `
       <div class="${pageClass}">
         ${overlayHtml}
         ${sectionsHtml}
       </div>
     `;
-  }).join("");
+    })
+    .join("");
 
   return `
 <!DOCTYPE html>

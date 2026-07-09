@@ -15,7 +15,7 @@ export const DefaultBrochureTemplate = {
     return `
       <div style="padding: 20px; border-bottom: 2px solid var(--primary-color); display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: 15px;">
-          <img src="${logoSrc}" alt="Logo" style="height: 55px; max-width: 180px; object-fit: contain;" />
+          <img src="${logoSrc}" alt="Logo" style="width: 180px; height: 55px; object-fit: contain;" />
           <div>
             <h1 style="font-size: 21px; font-weight: 700; color: var(--primary-color); margin: 0; font-family: 'Poppins', sans-serif;">${campaign.campaignTitle || "PROMO CAMPAIGN"}</h1>
             <p style="font-size: 12px; color: #6b7280; margin: 2px 0 0 0; font-family: 'Poppins', sans-serif;">${campaign.headerTitle || ""}</p>

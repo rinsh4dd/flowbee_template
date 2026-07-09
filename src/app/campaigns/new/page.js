@@ -633,9 +633,18 @@ function CampaignEditor() {
                       type="number"
                       min="1"
                       max="25"
-                      value={campaign.productsPerPage || 15}
+                      value={campaign.productsPerPage ?? ""}
                       onChange={(e) => {
-                        const val = Math.min(25, Math.max(1, parseInt(e.target.value) || 15));
+                        const rawVal = e.target.value;
+                        if (rawVal === "") {
+                          setCampaign(prev => ({
+                            ...prev,
+                            productsPerPage: null,
+                            productsPerPageSubsequent: null
+                          }));
+                          return;
+                        }
+                        const val = Math.min(25, Math.max(1, parseInt(rawVal) || 15));
                         setCampaign(prev => ({ 
                           ...prev, 
                           productsPerPage: val,
@@ -653,6 +662,12 @@ function CampaignEditor() {
                   onChange={setProducts}
                   productsPerPage={campaign.productsPerPage}
                   productsPerPageSubsequent={campaign.productsPerPageSubsequent}
+                  onLimitChange={(limitType, val) => {
+                    setCampaign(prev => ({
+                      ...prev,
+                      [limitType]: val
+                    }));
+                  }}
                 />
               </div>
             )}

@@ -319,59 +319,140 @@ export default function DashboardPage() {
             </button>
 
             {showTemplateSelector && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4 py-6">
-                <div className="w-full max-w-5xl rounded-[28px] border border-slate-200 bg-white p-4 shadow-2xl">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-slate-500">Start a new campaign</p>
-                      <h3 className="text-base font-semibold text-slate-900">Choose the template you want to customize</h3>
+              <div 
+                className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+                style={{ animation: "fadeIn 0.2s ease-out" }}
+              >
+                {/* Animated Backdrop */}
+                <div 
+                  className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+                  onClick={() => setShowTemplateSelector(false)}
+                  style={{ animation: "fadeIn 0.15s ease-out" }}
+                />
+
+                {/* Modal Container */}
+                <div 
+                  className="relative w-full max-w-5xl rounded-[32px] border border-white/20 bg-white shadow-2xl overflow-hidden"
+                  style={{ animation: "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)" }}
+                >
+                  {/* Gradient Header */}
+                  <div className="relative bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100 px-8 py-7 overflow-hidden border-b border-emerald-200/60">
+                    {/* Decorative elements */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-emerald-300/15 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-green-400/10 to-transparent rounded-full translate-y-1/2 -translate-x-1/2" />
+                    
+                    <div className="relative flex items-start justify-between gap-4">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-600/70 mb-2 block">New Campaign</span>
+                        <h3 className="text-xl font-bold text-emerald-900 tracking-tight">Choose a Template</h3>
+                        <p className="text-xs text-emerald-700/60 mt-1 font-medium max-w-md">Select a design layout to start building your promotional brochure. Each template is fully customizable.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowTemplateSelector(false)}
+                        className="p-2.5 rounded-2xl bg-emerald-900/8 hover:bg-emerald-900/15 text-emerald-700/60 hover:text-emerald-900 transition-all duration-200 cursor-pointer shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowTemplateSelector(false)}
-                      className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                    >
-                      ✕
-                    </button>
                   </div>
 
-                  <div className="grid max-h-[70vh] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
-                    {templates.map((template) => {
-                      const isSelected = selectedTemplateId === template.id;
-                      return (
-                        <button
-                          key={template.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedTemplateId(template.id);
-                            setShowTemplateSelector(false);
-                            router.push(`/campaigns/new?templateId=${template.id}`);
-                          }}
-                          className={`overflow-hidden rounded-2xl border text-left transition ${
-                            isSelected
-                              ? "border-[#f97316] bg-orange-50 shadow-[0_10px_25px_-15px_rgba(249,115,22,0.6)]"
-                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                          }`}
-                        >
-                          <div className="h-40 overflow-hidden bg-slate-50">
-                            <TemplateCardPreview template={template} />
-                          </div>
-                          <div className="p-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-semibold text-slate-800">{template.name}</span>
-                              {isSelected && <span className="text-[10px] font-bold uppercase tracking-wider text-[#f97316]">Selected</span>}
+                  {/* Template Cards Grid */}
+                  <div className="p-6 bg-gradient-to-b from-slate-50/80 to-white">
+                    <div className="grid max-h-[55vh] grid-cols-1 gap-4 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3 scrollbar-thin">
+                      {templates.map((template) => {
+                        const isSelected = selectedTemplateId === template.id;
+                        return (
+                          <button
+                            key={template.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedTemplateId(template.id);
+                              setShowTemplateSelector(false);
+                              router.push(`/campaigns/new?templateId=${template.id}`);
+                            }}
+                            className={`group overflow-hidden rounded-2xl border-2 text-left transition-all duration-250 cursor-pointer hover:-translate-y-0.5 ${
+                              isSelected
+                                ? "border-orange-400 bg-gradient-to-b from-orange-50/80 to-white shadow-lg shadow-orange-200/50 ring-2 ring-orange-200/50"
+                                : "border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/60"
+                            }`}
+                          >
+                            {/* Template Preview */}
+                            <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
+                              <TemplateCardPreview template={template} />
+                              
+                              {/* Hover Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                                <span className="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-sm text-slate-900 text-[11px] font-bold px-4 py-2 rounded-xl shadow-lg">
+                                  <ArrowRight className="h-3 w-3" />
+                                  Use This Template
+                                </span>
+                              </div>
+
+                              {/* Selected Badge */}
+                              {isSelected && (
+                                <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-[9px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md shadow-orange-500/30">
+                                  ✓ Selected
+                                </div>
+                              )}
+
+                              {/* Template Type Badge */}
+                              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-slate-600 text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm border border-white/50">
+                                {template.type === 'offer_brochure' ? '📄 Offer Brochure' : template.type}
+                              </div>
                             </div>
-                            <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{template.description || "Ready to customize for your campaign."}</p>
-                            <div className="mt-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                              <span>Preview template</span>
-                              <span>{isSelected ? "Open editor" : "Choose"}</span>
+
+                            {/* Template Info */}
+                            <div className="p-4">
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <h4 className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors">{template.name}</h4>
+                              </div>
+                              <p className="text-[11px] leading-relaxed text-slate-500 font-medium line-clamp-2">
+                                {template.description || "Ready to customize for your promotional campaign."}
+                              </p>
+                              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3 text-[10px] font-semibold text-slate-400">
+                                  <span className="flex items-center gap-1">
+                                    <Layers className="h-3 w-3" />
+                                    {template.productsPerPage || 8} items/page
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <FileText className="h-3 w-3" />
+                                    A4 Print
+                                  </span>
+                                </div>
+                                <ArrowUpRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-orange-500 transition-colors" />
+                              </div>
                             </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Empty State */}
+                    {templates.length === 0 && (
+                      <div className="text-center py-16">
+                        <div className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                          <FileText className="h-6 w-6 text-slate-350" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-600 mb-1">No Templates Available</p>
+                        <p className="text-xs text-slate-400 font-medium">Templates will appear here once configured by an admin.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Keyframe Animations */}
+                <style>{`
+                  @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                  }
+                  @keyframes slideUp {
+                    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                  }
+                `}</style>
               </div>
             )}
           </div>

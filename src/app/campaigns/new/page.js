@@ -138,16 +138,16 @@ function CampaignEditor() {
               accentColor: "#facc15",
               footerBgColor: "#064e3b",
               textColor: "#1f2937",
-              companyName: "WEFIVE HYPERMARKET",
-              campaignTitle: "Tuesday Market Offer",
-              headerTitle: "ചൊവ്വാ ചന്ത",
-              headerSubtitle: "Tuesday Market Savings",
-              headerBadgeText: "ONLY ON 16 JUNE 2026",
+              companyName: "DEMO STORE",
+              campaignTitle: "Onam Special Offer",
+              headerTitle: "ഓണം ഓഫർ",
+              headerSubtitle: "Onam Special Savings",
+              headerBadgeText: "LIMITED TIME OFFER",
               offerStartDate: new Date().toISOString().split("T")[0],
               offerEndDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-              footerAddress: "# CHERUTHURUTHY CHUNGAM, THRISSUR 679531",
-              phone: "+91 8086313300",
-              whatsapp: "+91 8943313300",
+              footerAddress: "# 123, MAIN ROAD, CITY 600001",
+              phone: "+91 9000000001",
+              whatsapp: "+91 9000000000",
               terms: "Bulk purchase not allowed. Offer valid till stock last. All pictures shown are for illustration purpose only.",
               currency: "INR",
               brochurePages: selectedTemplate?.brochurePages || 1
@@ -801,7 +801,7 @@ function CampaignEditor() {
                       type="text"
                       value={campaign.phone}
                       onChange={(e) => setCampaign(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="+91 8086313300"
+                      placeholder="+91 9000000001"
                       className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
                     />
                   </div>
@@ -818,7 +818,7 @@ function CampaignEditor() {
                       type="text"
                       value={campaign.whatsapp}
                       onChange={(e) => setCampaign(prev => ({ ...prev, whatsapp: e.target.value }))}
-                      placeholder="+91 8943313300"
+                      placeholder="+91 9000000000"
                       className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
                     />
                   </div>
@@ -833,7 +833,7 @@ function CampaignEditor() {
                     type="text"
                     value={campaign.companyName || ""}
                     onChange={(e) => setCampaign(prev => ({ ...prev, companyName: e.target.value }))}
-                    placeholder="e.g. WEFIVE HYPERMARKET"
+                    placeholder="e.g. DEMO STORE"
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 transition"
                   />
                 </div>
@@ -846,7 +846,7 @@ function CampaignEditor() {
                   <textarea
                     value={campaign.footerAddress}
                     onChange={(e) => setCampaign(prev => ({ ...prev, footerAddress: e.target.value }))}
-                    placeholder="e.g. # CHERUTHURUTHY CHUNGAM, THRISSUR 679531"
+                    placeholder="e.g. # 123, MAIN ROAD, CITY 600001"
                     rows={2}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600 transition resize-none leading-relaxed shadow-inner"
                   />

@@ -9,7 +9,7 @@ export const WeFiveTuesdayMarketTemplate = {
   id: "wefive_tuesday_market",
   name: "WeFive Tuesday Market",
   defaultProductsPerPage: 19,
-  
+
   // Leaves overlay HTML for this page
   renderPageOverlay() {
     return `
@@ -24,7 +24,9 @@ export const WeFiveTuesdayMarketTemplate = {
 
   // custom header renderer
   renderHeader(campaign, pageNumber, totalPages) {
-    const logoSrc = campaign.logoUrl || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=200";
+    const logoSrc =
+      campaign.logoUrl ||
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=200";
 
     // Formatter for WeFive dynamic date badge range
     const formatWeFiveDates = (startDateStr, endDateStr) => {
@@ -32,57 +34,73 @@ export const WeFiveTuesdayMarketTemplate = {
         const today = new Date();
         return {
           day: today.toLocaleDateString("en-US", { day: "numeric" }),
-          month: today.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
-          year: today.toLocaleDateString("en-US", { year: "numeric" })
+          month: today
+            .toLocaleDateString("en-US", { month: "short" })
+            .toUpperCase(),
+          year: today.toLocaleDateString("en-US", { year: "numeric" }),
         };
       }
-      
+
       const startObj = new Date(startDateStr);
       const startDay = startObj.toLocaleDateString("en-US", { day: "numeric" });
-      const startMonth = startObj.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
-      const startYear = startObj.toLocaleDateString("en-US", { year: "numeric" });
-      
+      const startMonth = startObj
+        .toLocaleDateString("en-US", { month: "short" })
+        .toUpperCase();
+      const startYear = startObj.toLocaleDateString("en-US", {
+        year: "numeric",
+      });
+
       if (!endDateStr || startDateStr === endDateStr) {
         return {
           day: startDay,
           month: startMonth,
-          year: startYear
+          year: startYear,
         };
       }
-      
+
       const endObj = new Date(endDateStr);
       const endDay = endObj.toLocaleDateString("en-US", { day: "numeric" });
-      const endMonth = endObj.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+      const endMonth = endObj
+        .toLocaleDateString("en-US", { month: "short" })
+        .toUpperCase();
       const endYear = endObj.toLocaleDateString("en-US", { year: "numeric" });
-      
+
       if (startYear !== endYear) {
         return {
           day: `${startDay} ${startMonth} ${startYear}`,
           month: "TO",
-          year: `${endDay} ${endMonth} ${endYear}`
+          year: `${endDay} ${endMonth} ${endYear}`,
         };
       }
-      
+
       if (startMonth !== endMonth) {
         return {
           day: `${startDay} ${startMonth} - ${endDay} ${endMonth}`,
           month: "VALID",
-          year: startYear
+          year: startYear,
         };
       }
-      
+
       return {
         day: `${startDay} - ${endDay}`,
         month: startMonth,
-        year: startYear
+        year: startYear,
       };
     };
 
-    const dateVal = formatWeFiveDates(campaign.offerStartDate, campaign.offerEndDate);
+    const dateVal = formatWeFiveDates(
+      campaign.offerStartDate,
+      campaign.offerEndDate,
+    );
     const offerDay = dateVal.day;
     const offerMonth = dateVal.month;
     const offerYear = dateVal.year;
-    const dateLabel = campaign.headerBadgeText || (campaign.offerEndDate && campaign.offerStartDate !== campaign.offerEndDate ? "VALID FROM" : "ONLY ON");
+    const dateLabel =
+      campaign.headerBadgeText ||
+      (campaign.offerEndDate &&
+      campaign.offerStartDate !== campaign.offerEndDate
+        ? "VALID FROM"
+        : "ONLY ON");
 
     const wefiveLogoHtml = campaign.logoUrl
       ? `<div class="wefive-logo-container"><img class="wefive-logo-img" src="${logoSrc}" alt="Logo" /></div>`
@@ -95,8 +113,8 @@ export const WeFiveTuesdayMarketTemplate = {
             </svg>
           </div>
           <div class="wefive-logo-text">
-            <span class="wefive-brand-we">We<span class="wefive-brand-five">Five</span></span>
-            <span class="wefive-brand-sub">Hypermarket</span>
+            <span class="wefive-brand-we">Your<span class="wefive-brand-five">Logo</span></span>
+            <span class="wefive-brand-sub">STORE</span>
           </div>
         </div>
       `;
@@ -158,26 +176,30 @@ export const WeFiveTuesdayMarketTemplate = {
 
   // custom footer renderer
   renderFooter(campaign, qrCodeSrc, pageNumber = 1, totalPages = 1) {
-    const whatsappNum = campaign.whatsapp || "+91 8943313300";
-    const phoneNum = campaign.phone || "+91 8086313300";
+    const whatsappNum = campaign.whatsapp || "+91 9000000000";
+    const phoneNum = campaign.phone || "+91 9000000001";
 
     return `
       <div class="footer-wefive">
         <div class="wefive-footer-left">
-          ${campaign.footerLogoUrl ? `
+          ${
+            campaign.footerLogoUrl
+              ? `
             <div class="wefive-footer-brand-logo">
               <img class="wefive-footer-logo-img" src="${campaign.footerLogoUrl}" alt="Footer Logo" />
             </div>
-          ` : `
+          `
+              : `
             <div class="wefive-footer-brand">
-              <span class="wefive-ft-we">${campaign.footerBrandName1 || "We"}<span class="wefive-ft-five">${campaign.footerBrandName2 || "Five"}</span></span>
-              <span class="wefive-ft-sub">${campaign.footerBrandSub || "HYPERMARKET"}</span>
+              <span class="wefive-ft-we">${campaign.footerBrandName1 || "Your"}<span class="wefive-ft-five">${campaign.footerBrandName2 || "Logo"}</span></span>
+              <span class="wefive-ft-sub">${campaign.footerBrandSub || "STORE"}</span>
             </div>
-          `}
+          `
+          }
           <div class="wefive-ft-divider"></div>
           <div class="wefive-footer-address-info">
-            <span class="wefive-address-title">${campaign.companyName || "WEFIVE HYPERMARKET"}</span>
-            <span class="wefive-address-body">${campaign.footerAddress || "# CHERUTHURUTHY CHUNGAM, THRISSUR 679531"}</span>
+            <span class="wefive-address-title">${campaign.companyName || "STORE BRAND NAME"}</span>
+            <span class="wefive-address-body">${campaign.footerAddress || "# 123, MAIN ROAD, CITY 600001"}</span>
           </div>
         </div>
         
@@ -189,13 +211,13 @@ export const WeFiveTuesdayMarketTemplate = {
           <div style="font-size: 7.5px; font-weight: 800; color: #fde047; border: 1px solid rgba(253, 224, 71, 0.3); border-radius: 4px; padding: 3px 6px; background: rgba(255,255,255,0.05); text-align: center; white-space: nowrap; line-height: 1;">
             PAGE ${pageNumber} / ${totalPages}
           </div>
-          <a href="tel:${phoneNum.replace(/\s+/g, '')}" class="wefive-contact-btn wefive-phone-btn">
+          <a href="tel:${phoneNum.replace(/\s+/g, "")}" class="wefive-contact-btn wefive-phone-btn">
             <svg class="wefive-ft-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M21.384 17.791l-3.75-1.875a1.5 1.5 0 00-1.834.417l-1.396 1.86a15.228 15.228 0 01-6.554-6.554l1.86-1.396a1.5 1.5 0 00.417-1.834L8.252 2.616A1.5 1.5 0 006.41 1.77L2.25 2.77A1.5 1.5 0 001.12 4.25c0 10.907 8.843 19.75 19.75 19.75a1.5 1.5 0 001.48-1.13l1-4.16a1.5 1.5 0 00-.966-1.919z" />
             </svg>
             <span>${phoneNum}</span>
           </a>
-          <a href="https://wa.me/${whatsappNum.replace(/\D/g, '')}" target="_blank" class="wefive-contact-btn wefive-whatsapp-btn">
+          <a href="https://wa.me/${whatsappNum.replace(/\D/g, "")}" target="_blank" class="wefive-contact-btn wefive-whatsapp-btn">
             <svg class="wefive-ft-icon" viewBox="0 0 24 24" fill="currentColor">
               <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.454L0 24zm6.59-4.846c1.6.95 3.16 1.449 4.825 1.451 5.423.002 9.835-4.41 9.838-9.83.002-2.628-1.017-5.1-2.868-6.956-1.851-1.856-4.311-2.879-6.943-2.88-5.426 0-9.838 4.412-9.841 9.835-.001 1.761.472 3.481 1.374 5.004l-.947 3.456 3.562-.934z" />
             </svg>
@@ -208,7 +230,9 @@ export const WeFiveTuesdayMarketTemplate = {
 
   // custom product card renderer
   renderProductCard(product, currency = "OMR") {
-    const imageSrc = product.imageUrl || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=150";
+    const imageSrc =
+      product.imageUrl ||
+      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=150";
 
     let nameMalayalam = product.productName || "";
     let nameEnglish = "";
@@ -223,22 +247,29 @@ export const WeFiveTuesdayMarketTemplate = {
     }
 
     const isWow = product.badgeText === "WOW!";
-    const unitTagText = product.quantity 
-      ? product.quantity.toUpperCase() 
-      : ((product.badgeText && !isWow) ? product.badgeText.toUpperCase() : "PER KG");
+    const unitTagText = product.quantity
+      ? product.quantity.toUpperCase()
+      : product.badgeText && !isWow
+        ? product.badgeText.toUpperCase()
+        : "PER KG";
 
-    const offerPriceVal = product.offerPrice !== undefined && product.offerPrice !== null && product.offerPrice !== ""
-      ? Number(product.offerPrice)
-      : "-";
+    const offerPriceVal =
+      product.offerPrice !== undefined &&
+      product.offerPrice !== null &&
+      product.offerPrice !== ""
+        ? Number(product.offerPrice)
+        : "-";
 
-    const wowBadgeHtml = isWow ? `
+    const wowBadgeHtml = isWow
+      ? `
       <div class="absolute -top-2 -left-2 animate-bounce" style="z-index: 10;">
         <svg class="w-10 h-10 drop-shadow-md text-sky-500 fill-sky-500" viewBox="0 0 24 24" style="width: 40px; height: 40px; fill: #0ea5e9; display: inline-block;">
           <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.21l8.2-1.192z" />
         </svg>
         <span class="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold text-white uppercase tracking-wider transform rotate-12" style="font-size: 8px; font-weight: 800; color: white;">WOW!</span>
       </div>
-    ` : "";
+    `
+      : "";
 
     return `
       <div class="flex flex-col items-center justify-between text-center relative p-1 transition-transform duration-200 hover:scale-105" style="height: 100%; min-height: 175px; max-height: 220px;">
@@ -263,7 +294,7 @@ export const WeFiveTuesdayMarketTemplate = {
             </span>
             <!-- Price badge -->
             <span class="bg-emerald-800 text-white font-black text-xs md:text-sm px-2.5 py-0.5 rounded-full shadow-md border border-emerald-700 -mt-1 z-10 font-sans flex items-center gap-0.5" style="background: #064e3b; color: white; font-weight: 900; font-size: 11px; padding: 1px 6px; border-radius: 9999px; border: 1px solid #047857; margin-top: -3px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 0.5px;">
-              <span class="text-[9px] font-normal font-sans" style="font-size: 8px; font-weight: 400;">${currency === 'OMR' ? '₹' : currency}</span>${offerPriceVal}
+              <span class="text-[9px] font-normal font-sans" style="font-size: 8px; font-weight: 400;">${currency === "OMR" ? "₹" : currency}</span>${offerPriceVal}
             </span>
           </div>
         </div>
@@ -617,5 +648,5 @@ export const WeFiveTuesdayMarketTemplate = {
       color: #4ade80;
     }
     `;
-  }
+  },
 };

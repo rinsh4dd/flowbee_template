@@ -29,8 +29,8 @@ export const DefaultBrochureTemplate = {
   },
 
   renderFooter(campaign, qrCodeSrc, pageNumber = 1, totalPages = 1) {
-    const whatsappNum = campaign.whatsapp || "+91 8943313300";
-    const phoneNum = campaign.phone || "+91 8086313300";
+    const whatsappNum = campaign.whatsapp || "+91 9000000000";
+    const phoneNum = campaign.phone || "+91 9000000001";
     return `
       <div class="footer">
         <div class="footer-address">

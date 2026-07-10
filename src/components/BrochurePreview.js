@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { generateBrochureHtml } from "@/lib/pdf-template";
+import { generateBrochureHtml, calculatePagesCount } from "@/lib/pdf-template";
 import { Eye, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { dbService } from "@/lib/db-service";
 
@@ -13,8 +13,8 @@ export default function BrochurePreview({ campaign, products }) {
   const containerRef = useRef(null);
   const frameAreaRef = useRef(null);
 
-  // Number of pages is read directly from the campaign/template config
-  const numPages = parseInt(campaign.brochurePages) || 2;
+  // Number of pages is dynamically calculated based on the actual compiler logic
+  const numPages = calculatePagesCount(campaign, products, customTemplate);
 
   const totalHeight = 1123 * numPages;
 

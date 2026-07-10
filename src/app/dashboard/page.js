@@ -54,7 +54,7 @@ function TemplateCardPreview({ template }) {
   }, []);
 
   useEffect(() => {
-    const mockCamp = {
+    let mockCamp = {
       companyName: "Hypermarket",
       campaignTitle: "Weekly Offers",
       offerStartDate: new Date().toISOString().split("T")[0],
@@ -68,6 +68,26 @@ function TemplateCardPreview({ template }) {
       themeColor: template.themeColor || "#dc2626"
     };
 
+    if (template.id === "red_big_deals") {
+      mockCamp = {
+        ...mockCamp,
+        companyName: "DEMO STORE",
+        campaignTitle: "SEPTEMBER",
+        headerTitle: "Bigger and Better deals are back",
+        themeColor: "#e11d48"
+      };
+    } else if (template.id === "supermarket_flyer_yellow") {
+      mockCamp = {
+        ...mockCamp,
+        campaignTitle: "Great Price Offer This Week",
+        headerTitle: "SAVE UP TO 75% DISCOUNT ON GREAT SELECTION",
+        headerBadgeText: "70%",
+        phone: "0123 456 7890",
+        whatsapp: "Loremipsum",
+        themeColor: "#e2231a"
+      };
+    }
+
     const mockProds = [
       { id: "1", productName: "Fresh Red Apples", quantity: "1 Bag (Approx 1 Kg)", oldPrice: 1.200, offerPrice: 0.790, imageUrl: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=150", sortOrder: 0 },
       { id: "2", productName: "Cooking Oil Blend", quantity: "1.5 Litres Bottle", oldPrice: 2.100, offerPrice: 1.490, imageUrl: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=150", sortOrder: 1 },
@@ -76,7 +96,8 @@ function TemplateCardPreview({ template }) {
     ];
 
     import("@/lib/pdf-template").then(({ generateBrochureHtml }) => {
-      const html = generateBrochureHtml(mockCamp, mockProds);
+      const isCustom = template.id !== "wefive_tuesday_market" && template.id !== "default_template";
+      const html = generateBrochureHtml(mockCamp, mockProds, isCustom ? template : null);
       setHtmlContent(html);
     });
   }, [template]);
@@ -654,38 +675,48 @@ export default function DashboardPage() {
               <p className="text-slate-400 text-xs font-bold">No templates available yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {templates.map((template) => (
-                <div key={template.id} className="group rounded-2xl overflow-hidden bg-white border border-slate-200/60 hover:shadow-md transition duration-200 shadow-xs flex flex-col justify-between">
-                  {/* Top Preview */}
-                  <div className="h-56 relative w-full overflow-hidden shrink-0 border-b border-slate-100">
-                    <TemplateCardPreview template={template} />
-                    <span className="absolute top-3 left-3 text-white font-extrabold text-[9px] uppercase tracking-widest bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded shadow-xs z-20">
+                <div 
+                  key={template.id} 
+                  className="group border border-slate-200/80 hover:border-slate-300/40 rounded-3xl overflow-hidden bg-white hover:shadow-[0_20px_45px_-15px_rgba(0,0,0,0.08)] hover:scale-[1.01] hover:-translate-y-1 transition-all duration-300 ease-out flex flex-col justify-between"
+                >
+                  {/* Top Preview Card Viewport */}
+                  <div className="h-64 relative w-full overflow-hidden shrink-0 border-b border-slate-100/80 bg-slate-50">
+                    <div className="absolute inset-0 group-hover:scale-[1.04] transition-transform duration-500 ease-out z-10">
+                      <TemplateCardPreview template={template} />
+                    </div>
+                    {/* Badge Overlay: Category type */}
+                    <span className="absolute top-4 left-4 text-white font-extrabold text-[8px] uppercase tracking-widest bg-slate-900/90 border border-slate-800/35 px-3 py-1.5 rounded-xl shadow-md z-20 select-none">
                       {template.type === 'offer_brochure' ? 'Offer Brochure' : template.type}
                     </span>
-                    <div className="absolute top-3 right-3 text-[8px] font-bold text-white bg-emerald-500/90 px-2 py-0.5 rounded shadow-xs z-20 uppercase tracking-wide">
+                    {/* Badge Overlay: Print specification */}
+                    <div className="absolute top-4 right-4 text-[8px] font-extrabold text-white bg-gradient-to-r from-emerald-500 to-teal-500 border border-emerald-400/25 px-3 py-1.5 rounded-xl shadow-md z-20 uppercase tracking-widest select-none">
                       A4 Layout
                     </div>
                   </div>
-                  {/* Bottom Details */}
-                  <div className="p-4 flex flex-col justify-between grow">
-                    <div>
-                      <h3 className="font-bold text-sm text-slate-900">{template.name}</h3>
-                      <p className="text-[11px] text-slate-500 mt-1 leading-relaxed font-medium line-clamp-2">
+
+                  {/* Bottom details card metadata and CTA trigger */}
+                  <div className="p-6 flex flex-col justify-between grow">
+                    <div className="text-left">
+                      <h3 className="font-extrabold text-sm sm:text-base text-slate-900 group-hover:text-[#f97316] transition-colors duration-250">
+                        {template.name}
+                      </h3>
+                      <p className="text-[11px] text-slate-450 mt-2 leading-relaxed font-semibold line-clamp-2">
                         {template.description}
                       </p>
                     </div>
-                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-                        <Layers className="h-3.5 w-3.5" />
-                        <span>{template.productsPerPage || 8} products</span>
+                    <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+                      <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-extrabold uppercase tracking-widest select-none">
+                        <Layers className="h-4 w-4 text-slate-300" />
+                        <span>{template.defaultProductsPerPage || 8} products per page</span>
                       </div>
                       <Link
                         href={`/campaigns/new?templateId=${template.id}`}
-                        className="flex items-center gap-0.5 bg-slate-950 hover:bg-slate-800 text-white font-bold text-[10px] px-3.5 py-1.5 rounded-xl transition"
+                        className="flex items-center gap-1 bg-gradient-to-r from-[#f97316] to-[#ea580c] hover:from-[#ea580c] hover:to-[#ea580c] text-white font-extrabold text-[9px] uppercase tracking-widest px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform group-hover:scale-[1.02]"
                       >
                         <span>Use layout</span>
-                        <ArrowUpRight className="h-3 w-3" />
+                        <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
                       </Link>
                     </div>
                   </div>

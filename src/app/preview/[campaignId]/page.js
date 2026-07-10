@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { dbService } from "@/lib/db-service";
-import { generateBrochureHtml } from "@/lib/pdf-template";
+import { generateBrochureHtml, calculatePagesCount } from "@/lib/pdf-template";
 import { Printer, ArrowLeft, FileDown } from "lucide-react";
 import { ProtectedRoute } from "@/components/AuthGuard";
 import FlowbeeLoader from "@/components/FlowbeeLoader";
@@ -131,8 +131,7 @@ function CampaignPreviewPage() {
     return <FlowbeeLoader />;
   }
 
-  const productsLimit = parseInt(campaign?.productsPerPage) || 19;
-  const numPages = Math.max(1, Math.ceil(products.length / productsLimit));
+  const numPages = calculatePagesCount(campaign, products, customTemplate);
   const totalHeight = 1123 * numPages;
 
   return (

@@ -7,22 +7,43 @@ const TEMPLATE_REGISTRY = {
   default_template: DefaultBrochureTemplate,
 };
 
+function getValueCaseInsensitive(obj, path) {
+  if (obj === null || obj === undefined) return undefined;
+  const parts = path.split(".");
+  let current = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    const keys = Object.keys(current);
+    const targetKey = keys.find(k => k.toLowerCase() === part.toLowerCase());
+    if (targetKey) {
+      current = current[targetKey];
+    } else {
+      current = undefined;
+    }
+  }
+  return current;
+}
+
 export function interpolate(templateString, data) {
   if (!templateString) return "";
   let result = templateString;
-  // Replace conditional block checks like {{#badgeText}}...{{/badgeText}}
-  result = result.replace(/\{\{\s*#(\w+)\s*\}\}([\s\S]*?)\{\{\s*\/(\w+)\s*\}\}/g, (match, key, content) => {
-    return data[key] ? content : "";
+  
+  // Replace positive conditional block checks: {{#key}}...{{/key}} (case-insensitive)
+  result = result.replace(/\{\{\s*#([\w.]+)\s*\}\}([\s\S]*?)\{\{\s*\/([\w.]+)\s*\}\}/gi, (match, key, content) => {
+    const val = getValueCaseInsensitive(data, key);
+    return val ? content : "";
   });
-  // Replace tag placeholders
+
+  // Replace negative/inverse conditional block checks: {{^key}}...{{/key}} (case-insensitive)
+  result = result.replace(/\{\{\s*\^([\w.]+)\s*\}\}([\s\S]*?)\{\{\s*\/([\w.]+)\s*\}\}/gi, (match, key, content) => {
+    const val = getValueCaseInsensitive(data, key);
+    return !val ? content : "";
+  });
+
+  // Replace tag placeholders: {{key}} (case-insensitive)
   return result.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (match, key) => {
-    const parts = key.split(".");
-    let current = data;
-    for (const part of parts) {
-      if (current === null || current === undefined) return "";
-      current = current[part];
-    }
-    return current !== undefined && current !== null ? String(current) : "";
+    const val = getValueCaseInsensitive(data, key);
+    return val !== undefined && val !== null ? String(val) : "";
   });
 }
 
@@ -76,6 +97,43 @@ export function getTemplate(templateId) {
   return TEMPLATE_REGISTRY[templateId] || WeFiveTuesdayMarketTemplate; // Fallback to WeFive
 }
 
+export function calculatePagesCount(campaign, products = [], customTemplate = null) {
+  const templateId = campaign.templateId || "wefive_tuesday_market";
+  let template = getTemplate(templateId);
+  if (customTemplate) {
+    template = typeof customTemplate.renderHeader === "function"
+      ? customTemplate
+      : makeDynamicTemplate(customTemplate);
+  }
+
+  const firstPageLimit =
+    templateId === "red_big_deals"
+      ? 9
+      : templateId === "supermarket_flyer_yellow"
+      ? 16
+      : parseInt(campaign.productsPerPage) || template.defaultProductsPerPage;
+  const subsequentPageLimit =
+    templateId === "red_big_deals"
+      ? 9
+      : templateId === "supermarket_flyer_yellow"
+      ? 16
+      : parseInt(campaign.productsPerPageSubsequent) ||
+        (templateId === "wefive_tuesday_market"
+          ? firstPageLimit + 5
+          : firstPageLimit);
+
+  if (!products || products.length === 0) {
+    return 1;
+  }
+
+  let count = 1;
+  if (products.length > firstPageLimit) {
+    const remaining = products.length - firstPageLimit;
+    count += Math.ceil(remaining / subsequentPageLimit);
+  }
+  return count;
+}
+
 /**
  * Main Layout Generator.
  * Compiles campaign and products schema into dynamic A4 A-grade print layout.
@@ -96,12 +154,20 @@ export function generateBrochureHtml(campaign, products = [], customTemplate = n
 
   // Distribute products sequentially based on first page vs subsequent page limits
   const firstPageLimit =
-    parseInt(campaign.productsPerPage) || template.defaultProductsPerPage;
+    templateId === "red_big_deals"
+      ? 9
+      : templateId === "supermarket_flyer_yellow"
+      ? 16
+      : parseInt(campaign.productsPerPage) || template.defaultProductsPerPage;
   const subsequentPageLimit =
-    parseInt(campaign.productsPerPageSubsequent) ||
-    (templateId === "wefive_tuesday_market"
-      ? firstPageLimit + 5
-      : firstPageLimit);
+    templateId === "red_big_deals"
+      ? 9
+      : templateId === "supermarket_flyer_yellow"
+      ? 16
+      : parseInt(campaign.productsPerPageSubsequent) ||
+        (templateId === "wefive_tuesday_market"
+          ? firstPageLimit + 5
+          : firstPageLimit);
   const pages = [];
 
   if (products.length === 0) {

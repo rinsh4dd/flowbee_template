@@ -252,6 +252,7 @@ export const dbService = {
           type: "offer_brochure",
           status: "active",
           brochurePages: 1,
+          defaultProductsPerPage: 15,
           description: "Organic theme with green gradient backgrounds, bilingual Malayalam/English labels, yellow currency circles, and high-impact bounce badges (perfect for grocery/produce markets).",
           themeColor: "#065f46",
           createdAt: new Date().toISOString()

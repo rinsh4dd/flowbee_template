@@ -3,619 +3,6 @@ import { dbService } from "./db-service";
 export async function seedDynamicTemplate() {
   const templatesToSeed = [
     {
-      id: "festive_gold_cream",
-      name: "✨ Gold & Cream Festive",
-      type: "offer_brochure",
-      status: "active",
-      brochurePages: 2,
-      description: "Luxurious cream-themed festive layout with gold accents, Playfair Display serif headers, elegant borders, and gold-accented pricing fields.",
-      defaultProductsPerPage: 15,
-      headerHtml: `
-        <div class="luxury-header">
-          <div class="luxury-header-border"></div>
-          <div class="luxury-title-wrap">
-            <h1>{{campaignTitle}}</h1>
-            <p class="subtitle">{{headerTitle}}</p>
-            {{#headerSubtitle}}<p class="desc">{{headerSubtitle}}</p>{{/headerSubtitle}}
-          </div>
-        </div>
-      `,
-      productCardHtml: `
-        <div class="luxury-card">
-          {{#badgeText}}<span class="luxury-badge">{{badgeText}}</span>{{/badgeText}}
-          <div class="luxury-img-wrap">
-            <img src="{{imageUrl}}" alt="{{productName}}" />
-          </div>
-          <div class="luxury-info">
-            <h3>{{productName}}</h3>
-            <p class="qty">{{quantity}}</p>
-            <div class="prices">
-              <span class="offer">{{currency}} {{formattedOfferPrice}}</span>
-              {{#oldPrice}}<span class="old">{{currency}} {{formattedOldPrice}}</span>{{/oldPrice}}
-            </div>
-          </div>
-        </div>
-      `,
-      footerHtml: `
-        <div class="luxury-footer">
-          <div class="luxury-footer-left">
-            <h4>{{footerBrandName1}} {{footerBrandName2}}</h4>
-            <p class="footer-sub">{{footerBrandSub}}</p>
-            <p class="contact">📞 {{phone}} • 💬 WhatsApp: {{whatsapp}}</p>
-          </div>
-          <div class="luxury-footer-right">
-            <img src="{{qrCodeSrc}}" alt="QR Code" />
-          </div>
-        </div>
-      `,
-      css: `
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap');
-        
-        .page-container {
-          background-color: #faf6f0 !important;
-          color: #2c2520 !important;
-          border: 10px solid #d4af37;
-        }
-        .luxury-header {
-          padding: 30px 24px 20px 24px;
-          text-align: center;
-          position: relative;
-        }
-        .luxury-header-border {
-          position: absolute;
-          top: 15px;
-          left: 15px;
-          right: 15px;
-          bottom: 15px;
-          border: 1px solid rgba(212, 175, 55, 0.4);
-          pointer-events: none;
-        }
-        .luxury-title-wrap h1 {
-          font-family: 'Playfair Display', serif;
-          font-size: 32px;
-          font-weight: 800;
-          color: #8c6212;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-          margin-bottom: 6px;
-        }
-        .luxury-title-wrap .subtitle {
-          font-size: 13px;
-          font-weight: 600;
-          color: #bfa054;
-          letter-spacing: 3px;
-          text-transform: uppercase;
-          margin-bottom: 4px;
-        }
-        .luxury-title-wrap .desc {
-          font-size: 10px;
-          color: #6e6053;
-          font-style: italic;
-        }
-        .grid-container {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 20px;
-          padding: 10px 25px 20px 25px;
-          background: transparent !important;
-          flex-grow: 1;
-        }
-        .luxury-card {
-          background: #ffffff;
-          border: 1px solid rgba(212, 175, 55, 0.25);
-          border-radius: 8px;
-          padding: 14px;
-          text-align: center;
-          position: relative;
-          box-shadow: 0 4px 10px rgba(140, 98, 18, 0.04);
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          height: 100%;
-        }
-        .luxury-badge {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          background: #8c6212;
-          color: #ffffff;
-          font-size: 8px;
-          font-weight: 700;
-          padding: 3px 8px;
-          border-radius: 20px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .luxury-img-wrap {
-          height: 110px;
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 10px;
-        }
-        .luxury-img-wrap img {
-          max-height: 100%;
-          max-width: 100%;
-          object-fit: contain;
-        }
-        .luxury-info h3 {
-          font-family: 'Playfair Display', serif;
-          font-size: 12px;
-          font-weight: 700;
-          color: #2c2520;
-          margin-bottom: 3px;
-          line-height: 1.3;
-        }
-        .luxury-info .qty {
-          font-size: 9px;
-          color: #8c7f72;
-          margin-bottom: 8px;
-          font-weight: 500;
-        }
-        .luxury-info .prices {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-        .luxury-info .offer {
-          font-size: 14px;
-          font-weight: 800;
-          color: #8c6212;
-        }
-        .luxury-info .old {
-          font-size: 10px;
-          text-decoration: line-through;
-          color: #b0a396;
-        }
-        .luxury-footer {
-          background: #2c2520;
-          color: #faf6f0;
-          padding: 20px 30px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-top: 2px solid #d4af37;
-        }
-        .luxury-footer-left {
-          text-align: left;
-        }
-        .luxury-footer-left h4 {
-          font-family: 'Playfair Display', serif;
-          font-size: 15px;
-          color: #d4af37;
-          margin-bottom: 2px;
-        }
-        .luxury-footer-left .footer-sub {
-          font-size: 9px;
-          color: #bfa054;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-          margin-bottom: 8px;
-        }
-        .luxury-footer-left .contact {
-          font-size: 9px;
-          opacity: 0.8;
-        }
-        .luxury-footer-right img {
-          height: 52px;
-          width: 52px;
-          border: 2px solid #d4af37;
-          border-radius: 4px;
-          background: white;
-          padding: 2px;
-        }
-      `
-    },
-    {
-      id: "minimal_glass_dark",
-      name: "🌌 Glassmorphic Dark",
-      type: "offer_brochure",
-      status: "active",
-      brochurePages: 2,
-      description: "Sleek, futuristic dark-themed template featuring semi-transparent glassmorphic cards, custom typography, and neon cyber accents.",
-      defaultProductsPerPage: 15,
-      headerHtml: `
-        <div class="glass-header">
-          <div class="glass-header-glow"></div>
-          <div class="glass-title-wrap">
-            <span class="tag">Exclusive Campaign</span>
-            <h1>{{campaignTitle}}</h1>
-            <p class="subtitle">{{headerTitle}}</p>
-          </div>
-        </div>
-      `,
-      productCardHtml: `
-        <div class="glass-card">
-          {{#badgeText}}<span class="glass-badge">{{badgeText}}</span>{{/badgeText}}
-          <div class="glass-img-wrap">
-            <img src="{{imageUrl}}" alt="{{productName}}" />
-          </div>
-          <div class="glass-info">
-            <h3>{{productName}}</h3>
-            <p class="qty">{{quantity}}</p>
-            <div class="prices">
-              <span class="offer">{{currency}} {{formattedOfferPrice}}</span>
-              {{#oldPrice}}<span class="old">{{currency}} {{formattedOldPrice}}</span>{{/oldPrice}}
-            </div>
-          </div>
-        </div>
-      `,
-      footerHtml: `
-        <div class="glass-footer">
-          <div class="glass-footer-left">
-            <h4>{{footerBrandName1}} <span>{{footerBrandName2}}</span></h4>
-            <p class="sub">{{footerBrandSub}}</p>
-            <p class="info">Call: {{phone}} • WhatsApp: {{whatsapp}}</p>
-          </div>
-          <div class="glass-footer-right">
-            <img src="{{qrCodeSrc}}" alt="QR Code" />
-          </div>
-        </div>
-      `,
-      css: `
-        .page-container {
-          background: #0d0e12 !important;
-          color: #f3f4f6 !important;
-          font-family: 'Poppins', sans-serif;
-        }
-        .glass-header {
-          padding: 35px 25px 25px 25px;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
-        }
-        .glass-header-glow {
-          position: absolute;
-          top: -50px;
-          left: 20%;
-          right: 20%;
-          height: 100px;
-          background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(0,0,0,0) 70%);
-          pointer-events: none;
-        }
-        .glass-title-wrap .tag {
-          font-size: 8px;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          color: #38bdf8;
-          font-weight: 800;
-          margin-bottom: 6px;
-          display: inline-block;
-        }
-        .glass-title-wrap h1 {
-          font-size: 28px;
-          font-weight: 800;
-          color: #ffffff;
-          letter-spacing: 0.5px;
-          margin-bottom: 4px;
-          background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .glass-title-wrap .subtitle {
-          font-size: 11px;
-          color: #94a3b8;
-          font-weight: 500;
-        }
-        .grid-container {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-          padding: 10px 24px 24px 24px;
-          background: transparent !important;
-          flex-grow: 1;
-        }
-        .glass-card {
-          background: rgba(255, 255, 255, 0.03) !important;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(16px);
-          border-radius: 12px;
-          padding: 12px;
-          text-align: center;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          height: 100%;
-        }
-        .glass-badge {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          background: linear-gradient(135deg, #38bdf8, #0284c7);
-          color: #ffffff;
-          font-size: 7px;
-          font-weight: 800;
-          padding: 2px 6px;
-          border-radius: 6px;
-          text-transform: uppercase;
-        }
-        .glass-img-wrap {
-          height: 110px;
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255, 255, 255, 0.015);
-          border-radius: 8px;
-          margin-bottom: 8px;
-          padding: 6px;
-          border: 1px solid rgba(255, 255, 255, 0.02);
-        }
-        .glass-img-wrap img {
-          max-height: 100%;
-          max-width: 100%;
-          object-fit: contain;
-        }
-        .glass-info h3 {
-          font-size: 11px;
-          font-weight: 600;
-          color: #f3f4f6;
-          margin-bottom: 2px;
-          line-height: 1.4;
-        }
-        .glass-info .qty {
-          font-size: 8px;
-          color: #64748b;
-          margin-bottom: 6px;
-          font-weight: 500;
-        }
-        .glass-info .prices {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-        }
-        .glass-info .offer {
-          font-size: 13px;
-          font-weight: 700;
-          color: #38bdf8;
-        }
-        .glass-info .old {
-          font-size: 9px;
-          text-decoration: line-through;
-          color: #475569;
-        }
-        .glass-footer {
-          background: rgba(255, 255, 255, 0.01);
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
-          padding: 16px 24px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .glass-footer-left {
-          text-align: left;
-        }
-        .glass-footer-left h4 {
-          font-size: 14px;
-          color: #ffffff;
-          font-weight: 700;
-        }
-        .glass-footer-left h4 span {
-          color: #38bdf8;
-        }
-        .glass-footer-left .sub {
-          font-size: 8px;
-          color: #64748b;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-          margin-bottom: 4px;
-        }
-        .glass-footer-left .info {
-          font-size: 8px;
-          color: #94a3b8;
-        }
-        .glass-footer-right img {
-          height: 48px;
-          width: 48px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 6px;
-          background: #ffffff;
-          padding: 2px;
-        }
-      `
-    },
-    {
-      id: "neo_brutalist_cyber",
-      name: "⚡ Brutalist Cyberpunk",
-      type: "offer_brochure",
-      status: "active",
-      brochurePages: 2,
-      description: "High-impact, trendsetting neo-brutalist theme. Bold chunky borders, flat drop shadows, and a punchy cyber-yellow palette.",
-      defaultProductsPerPage: 15,
-      headerHtml: `
-        <div class="brutal-header">
-          <div class="brutal-header-card">
-            <h1>{{campaignTitle}}</h1>
-            <p class="subtitle">{{headerTitle}}</p>
-          </div>
-        </div>
-      `,
-      productCardHtml: `
-        <div class="brutal-card">
-          {{#badgeText}}<span class="brutal-badge">{{badgeText}}</span>{{/badgeText}}
-          <div class="brutal-img-wrap">
-            <img src="{{imageUrl}}" alt="{{productName}}" />
-          </div>
-          <div class="brutal-info">
-            <h3>{{productName}}</h3>
-            <p class="qty">{{quantity}}</p>
-            <div class="prices">
-              <span class="offer">{{currency}} {{formattedOfferPrice}}</span>
-              {{#oldPrice}}<span class="old">{{currency}} {{formattedOldPrice}}</span>{{/oldPrice}}
-            </div>
-          </div>
-        </div>
-      `,
-      footerHtml: `
-        <div class="brutal-footer">
-          <div class="brutal-footer-card">
-            <div class="info">
-              <h4>{{footerBrandName1}} {{footerBrandName2}}</h4>
-              <p class="sub">{{footerBrandSub}}</p>
-              <p class="contact">CALL: {{phone}} • WHATSAPP: {{whatsapp}}</p>
-            </div>
-            <img src="{{qrCodeSrc}}" alt="QR Code" />
-          </div>
-        </div>
-      `,
-      css: `
-        .page-container {
-          background-color: #fef08a !important;
-          color: #000000 !important;
-          font-family: 'Poppins', sans-serif;
-        }
-        .brutal-header {
-          padding: 30px 24px 15px 24px;
-        }
-        .brutal-header-card {
-          background: #ffffff;
-          border: 3px solid #000000;
-          box-shadow: 5px 5px 0px #000000;
-          padding: 16px;
-          text-align: center;
-        }
-        .brutal-header-card h1 {
-          font-size: 26px;
-          font-weight: 900;
-          text-transform: uppercase;
-          letter-spacing: -0.5px;
-          margin-bottom: 2px;
-        }
-        .brutal-header-card .subtitle {
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          color: #f97316;
-        }
-        .grid-container {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-          padding: 10px 24px 20px 24px;
-          background: transparent !important;
-          flex-grow: 1;
-        }
-        .brutal-card {
-          background: #ffffff;
-          border: 3px solid #000000;
-          box-shadow: 4px 4px 0px #000000;
-          border-radius: 0px;
-          padding: 12px;
-          text-align: center;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          height: 100%;
-        }
-        .brutal-badge {
-          position: absolute;
-          top: -8px;
-          right: -8px;
-          background: #f97316;
-          color: #ffffff;
-          font-size: 7px;
-          font-weight: 900;
-          padding: 3px 6px;
-          border: 2px solid #000000;
-          text-transform: uppercase;
-          transform: rotate(2deg);
-        }
-        .brutal-img-wrap {
-          height: 100px;
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-bottom: 2px solid #000000;
-          margin-bottom: 8px;
-          padding-bottom: 8px;
-        }
-        .brutal-img-wrap img {
-          max-height: 100%;
-          max-width: 100%;
-          object-fit: contain;
-        }
-        .brutal-info h3 {
-          font-size: 11px;
-          font-weight: 800;
-          text-transform: uppercase;
-          color: #000000;
-          margin-bottom: 2px;
-          line-height: 1.3;
-        }
-        .brutal-info .qty {
-          font-size: 8px;
-          color: #555555;
-          margin-bottom: 6px;
-          font-weight: 700;
-        }
-        .brutal-info .prices {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-        }
-        .brutal-info .offer {
-          font-size: 13px;
-          font-weight: 900;
-          color: #ffffff;
-          background: #000000;
-          padding: 2px 6px;
-          border: 1px solid #000000;
-        }
-        .brutal-info .old {
-          font-size: 9px;
-          text-decoration: line-through;
-          color: #888888;
-          font-weight: 700;
-        }
-        .brutal-footer {
-          padding: 15px 24px 30px 24px;
-        }
-        .brutal-footer-card {
-          background: #ffffff;
-          border: 3px solid #000000;
-          box-shadow: 4px 4px 0px #000000;
-          padding: 12px 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .brutal-footer-card .info {
-          text-align: left;
-        }
-        .brutal-footer-card h4 {
-          font-size: 14px;
-          font-weight: 900;
-          text-transform: uppercase;
-        }
-        .brutal-footer-card .sub {
-          font-size: 8px;
-          font-weight: 700;
-          color: #666666;
-          margin-bottom: 4px;
-          text-transform: uppercase;
-        }
-        .brutal-footer-card .contact {
-          font-size: 8px;
-          font-weight: 800;
-        }
-        .brutal-footer-card img {
-          height: 44px;
-          width: 44px;
-          border: 2px solid #000000;
-          background: #ffffff;
-          padding: 2px;
-        }
-      `
-    },
-    {
       id: "red_big_deals",
       name: "🔴 Red Big Deals",
       type: "offer_brochure",
@@ -941,12 +328,13 @@ export async function seedDynamicTemplate() {
         .grid-container.count-2,
         .grid-container.count-3 {
           grid-template-columns: repeat(2, 1fr) !important;
+          align-content: start !important;
           gap: 24px !important;
           padding: 30px 40px !important;
         }
         .grid-container.count-1 {
           grid-template-columns: 1fr !important;
-          max-width: 400px;
+          max-width: 280px;
           margin: 0 auto;
         }
         .grid-container.count-1 .red-card,
@@ -954,22 +342,22 @@ export async function seedDynamicTemplate() {
         .grid-container.count-3 .red-card {
           padding: 20px !important;
           border-width: 2px !important;
-          min-height: 250px !important;
+          height: 220px !important;
         }
         .grid-container.count-1 .red-img-wrap,
         .grid-container.count-2 .red-img-wrap,
         .grid-container.count-3 .red-img-wrap {
-          height: 160px !important;
+          height: 140px !important;
         }
         .grid-container.count-1 .product-info h3,
         .grid-container.count-2 .product-info h3,
         .grid-container.count-3 .product-info h3 {
-          font-size: 15px !important;
+          font-size: 14px !important;
         }
         .grid-container.count-1 .product-info .qty,
         .grid-container.count-2 .product-info .qty,
         .grid-container.count-3 .product-info .qty {
-          font-size: 11px !important;
+          font-size: 10px !important;
         }
         .grid-container.count-1 .price-badge,
         .grid-container.count-2 .price-badge,
@@ -979,38 +367,413 @@ export async function seedDynamicTemplate() {
         .grid-container.count-1 .price-badge-body,
         .grid-container.count-2 .price-badge-body,
         .grid-container.count-3 .price-badge-body {
-          font-size: 15px !important;
+          font-size: 14px !important;
           padding: 5px 2px !important;
         }
 
         .grid-container.count-4,
         .grid-container.count-5,
         .grid-container.count-6 {
-          grid-template-columns: repeat(2, 1fr) !important;
-          gap: 20px !important;
-          padding: 20px 30px !important;
+          grid-template-columns: repeat(3, 1fr) !important;
+          align-content: start !important;
+          gap: 16px !important;
+          padding: 20px 24px !important;
         }
         .grid-container.count-4 .red-card,
         .grid-container.count-5 .red-card,
         .grid-container.count-6 .red-card {
-          padding: 16px !important;
-          min-height: 200px !important;
+          padding: 12px !important;
+          height: 165px !important;
         }
         .grid-container.count-4 .red-img-wrap,
         .grid-container.count-5 .red-img-wrap,
         .grid-container.count-6 .red-img-wrap {
-          height: 130px !important;
+          height: 100px !important;
         }
         .grid-container.count-4 .product-info h3,
         .grid-container.count-5 .product-info h3,
         .grid-container.count-6 .product-info h3 {
-          font-size: 12px !important;
+          font-size: 11px !important;
+        }
+      `
+    },
+    {
+      id: "supermarket_flyer_yellow",
+      name: "🟡 Red & Yellow Supermarket",
+      type: "offer_brochure",
+      status: "active",
+      brochurePages: 2,
+      description: "Bright, high-impact red & yellow grocery catalog template. Features a large round header badge, a clean 4-column product grid (16 items/page), and a details-rich red footer.",
+      defaultProductsPerPage: 16,
+      headerHtml: `
+        <div class="header">
+          <div class="header-left">
+            <h1>{{#campaignTitle}}{{campaignTitle}}{{/campaignTitle}}{{^campaignTitle}}Great<br><span class="accent">Price offer</span><br>This week{{/campaignTitle}}</h1>
+            <div class="subtext">
+              <span>{{#headerTitle}}{{headerTitle}}{{/headerTitle}}{{^headerTitle}}SAVE UP TO 75% DISCOUNT ON GREAT SELECTION{{/headerTitle}}</span>
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="badge">
+              <div class="mega">Mega<br>Sale</div>
+              <div class="disc">Discount up to</div>
+              <div class="percent">{{#headerBadgeText}}{{headerBadgeText}}{{/headerBadgeText}}{{^headerBadgeText}}70%{{/headerBadgeText}}</div>
+            </div>
+          </div>
+        </div>
+      `,
+      productCardHtml: `
+        <div class="product-card">
+          {{#badgeText}}
+          <div class="discount-tag">
+            <svg viewBox="0 0 40 40"><path d="M20 0 L40 8 V40 H0 V8 Z" fill="#e2231a"/></svg>
+            <div class="tag-text">{{badgeText}}</div>
+          </div>
+          {{/badgeText}}
+          <div class="product-image"><img src="{{imageUrl}}" alt="{{productName}}"></div>
+          <div class="product-name">{{productName}}</div>
+          {{#oldPrice}}<div class="price-old">{{currency}} {{formattedOldPrice}}</div>{{/oldPrice}}
+          <div class="price-new">{{currency}} {{formattedOfferPrice}}</div>
+        </div>
+      `,
+      footerHtml: `
+        <div class="footer">
+          <div class="footer-left">
+            <div class="wa-icon">
+              <svg viewBox="0 0 24 24" fill="#25D366"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.06-1.33A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.3c-.22.6-1.28 1.17-1.77 1.24-.45.07-1.02.1-1.65-.1-.38-.12-.87-.28-1.5-.55-2.63-1.14-4.35-3.8-4.48-3.98-.13-.17-1.08-1.43-1.08-2.73 0-1.3.68-1.93.93-2.2.24-.26.53-.33.7-.33h.5c.16 0 .38-.03.58.44.22.53.75 1.83.82 1.96.07.14.11.3.02.48-.09.18-.14.29-.27.45-.14.16-.29.36-.41.48-.14.14-.28.29-.12.57.16.29.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.24 1.38.28.14.44.12.6-.07.16-.19.68-.79.86-1.06.18-.27.36-.22.6-.13.24.09 1.53.72 1.79.85.26.13.43.19.5.3.06.11.06.63-.16 1.23z"/></svg>
+            </div>
+            <div class="contact-text">
+              <div class="label">For more information</div>
+              <div class="phone">{{phone}}</div>
+            </div>
+          </div>
+          <div class="social">
+            <a href="#"><svg viewBox="0 0 24 24" fill="#e2231a"><path d="M22 12a10 10 0 10-11.6 9.87v-6.98H7.9V12h2.5V9.8c0-2.47 1.47-3.84 3.72-3.84 1.08 0 2.2.2 2.2.2v2.4h-1.24c-1.22 0-1.6.76-1.6 1.54V12h2.72l-.44 2.89h-2.28v6.98A10 10 0 0022 12z"/></svg></a>
+            <a href="#"><svg viewBox="0 0 24 24" fill="#e2231a"><path d="M12 2c2.7 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.22.6 1.77 1.15.55.55.9 1.11 1.15 1.77.25.64.42 1.37.47 2.43.05 1.06.06 1.42.06 4.12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 01-1.15 1.77c-.55.55-1.11.9-1.77 1.15-.64.25-1.37.42-2.43.47-1.06.05-1.42.06-4.12.06s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 01-1.77-1.15 4.9 4.9 0 01-1.15-1.77c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.7 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43.26-.66.6-1.22 1.15-1.77A4.9 4.9 0 015.45 2.53c.64-.25 1.37-.42 2.43-.47C8.94 2.01 9.3 2 12 2zm0 5a5 5 0 100 10 5 5 0 000-10zm0 8.2a3.2 3.2 0 110-6.4 3.2 3.2 0 010 6.4zm5.2-8.4a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4z"/></svg></a>
+            <span class="handle">{{whatsapp}}</span>
+          </div>
+          <div class="footer-right">
+            <div class="scan-text">Scan here</div>
+            <div class="qr"><img src="{{qrCodeSrc}}" alt="QR code"></div>
+          </div>
+        </div>
+      `,
+      css: `
+        .page-container {
+          background-color: #ffffff !important;
+          color: #1e293b !important;
+          font-family: 'Arial', sans-serif;
+        }
+        .header {
+          position: relative;
+          display: flex;
+          background: #e2231a;
+        }
+        .header-left {
+          flex: 1;
+          padding: 36px 32px;
+          color: #ffffff;
+        }
+        .header-left h1 {
+          font-size: 42px;
+          line-height: 1.15;
+          font-weight: 800;
+          text-transform: capitalize;
+        }
+        .header-left h1 .accent {
+          color: #ffd400;
+        }
+        .header-left .subtext {
+          margin-top: 15px;
+          font-size: 15px;
+          font-weight: 700;
+          letter-spacing: 0.3px;
+        }
+        .header-left .subtext span {
+          color: #ffd400;
+        }
+        .header-right {
+          width: 220px;
+          background: #ffd400;
+          position: relative;
+        }
+        .badge {
+          position: absolute;
+          top: 36px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 170px;
+          height: 170px;
+          background: #ffffff;
+          border-radius: 50%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          box-shadow: 0 0 0 9px #ffd400, 0 0 0 11px #ffffff;
+          z-index: 10;
+        }
+        .badge .mega {
+          color: #e2231a;
+          font-weight: 800;
+          font-size: 22px;
+          line-height: 1.1;
+        }
+        .badge .disc {
+          font-size: 13px;
+          font-weight: 700;
+          color: #333333;
+          margin-top: 3px;
+        }
+        .badge .percent {
+          color: #e2231a;
+          font-weight: 800;
+          font-size: 28px;
+          margin-top: 3px;
+        }
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr) !important;
+          gap: 16px !important;
+          padding: 24px !important;
+          background: #ffffff !important;
+          flex-grow: 1;
+        }
+        .product-card {
+          position: relative;
+          background: #ffffff;
+          border: 1px solid #eeeeee;
+          border-radius: 5px;
+          padding: 10px 10px 16px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          height: 100%;
+        }
+        .discount-tag {
+          position: absolute;
+          top: -5px;
+          right: 6px;
+          width: 50px;
+          height: 50px;
+          z-index: 5;
+        }
+        .discount-tag svg { width: 100%; height: 100%; }
+        .discount-tag .tag-text {
+          position: absolute;
+          top: 8px;
+          left: 0;
+          right: 0;
+          text-align: center;
+          color: #ffffff;
+          font-size: 13px;
+          font-weight: 800;
+        }
+        .product-image {
+          width: 100%;
+          height: 120px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: 10px;
+          margin-bottom: 10px;
+        }
+        .product-image img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+        .product-name {
+          font-size: 14px;
+          color: #999999;
+          font-weight: 600;
+          text-transform: capitalize;
+          margin-bottom: 4px;
+        }
+        .price-old {
+          font-size: 12px;
+          color: #bbbbbb;
+          text-decoration: line-through;
+          margin-bottom: 2px;
+        }
+        .price-new {
+          font-size: 20px;
+          color: #e2231a;
+          font-weight: 800;
+        }
+        .footer {
+          display: flex;
+          align-items: stretch;
+          background: #e2231a;
+          height: 75px;
+        }
+        .footer-left {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 12px 24px;
+          color: #ffffff;
+        }
+        .footer-left .wa-icon {
+          width: 50px;
+          height: 50px;
+          background: #ffffff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .footer-left .wa-icon svg { width: 26px; height: 26px; }
+        .footer-left .contact-text .label {
+          font-size: 13px;
+          font-weight: 600;
+        }
+        .footer-left .contact-text .phone {
+          font-size: 22px;
+          font-weight: 800;
+        }
+        .social {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding-right: 15px;
+        }
+        .social a {
+          width: 36px;
+          height: 36px;
+          background: #ffffff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .social a svg { width: 20px; height: 20px; }
+        .social .handle {
+          color: #ffffff;
+          font-size: 15px;
+          font-weight: 600;
+          margin-left: 6px;
+        }
+        .footer-right {
+          width: 220px;
+          background: #ffd400;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 8px;
+        }
+        .footer-right .scan-text {
+          color: #e2231a;
+          font-size: 15px;
+          font-weight: 800;
+          margin-bottom: 4px;
+        }
+        .footer-right .qr {
+          width: 90px;
+          height: 90px;
+          background: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 3px;
+          margin-top: -30px;
+          border: 3px solid #ffd400;
+          box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+          z-index: 10;
+        }
+        .footer-right .qr img {
+          width: 100%;
+          height: 100%;
+        }
+
+        /* Dynamic count classes to prevent low item stretching */
+        .grid-container.count-1,
+        .grid-container.count-2,
+        .grid-container.count-3,
+        .grid-container.count-4 {
+          grid-template-columns: repeat(2, 1fr) !important;
+          align-content: start !important;
+          gap: 20px !important;
+          padding: 30px !important;
+        }
+        .grid-container.count-1 {
+          grid-template-columns: 1fr !important;
+          max-width: 280px;
+          margin: 0 auto;
+        }
+        .grid-container.count-1 .product-card,
+        .grid-container.count-2 .product-card,
+        .grid-container.count-3 .product-card,
+        .grid-container.count-4 .product-card {
+          height: 240px !important;
+        }
+        .grid-container.count-1 .product-image,
+        .grid-container.count-2 .product-image,
+        .grid-container.count-3 .product-image,
+        .grid-container.count-4 .product-image {
+          height: 140px !important;
+        }
+
+        .grid-container.count-5,
+        .grid-container.count-6,
+        .grid-container.count-7,
+        .grid-container.count-8 {
+          grid-template-columns: repeat(3, 1fr) !important;
+          align-content: start !important;
+          gap: 16px !important;
+        }
+        .grid-container.count-5 .product-card,
+        .grid-container.count-6 .product-card,
+        .grid-container.count-7 .product-card,
+        .grid-container.count-8 .product-card {
+          height: 190px !important;
+        }
+        .grid-container.count-5 .product-image,
+        .grid-container.count-6 .product-image,
+        .grid-container.count-7 .product-image,
+        .grid-container.count-8 .product-image {
+          height: 100px !important;
+        }
+
+        .grid-container.count-9,
+        .grid-container.count-10,
+        .grid-container.count-11,
+        .grid-container.count-12 {
+          grid-template-columns: repeat(3, 1fr) !important;
+          align-content: start !important;
+        }
+        .grid-container.count-9 .product-card,
+        .grid-container.count-10 .product-card,
+        .grid-container.count-11 .product-card,
+        .grid-container.count-12 .product-card {
+          height: 180px !important;
+        }
+        .grid-container.count-9 .product-image,
+        .grid-container.count-10 .product-image,
+        .grid-container.count-11 .product-image,
+        .grid-container.count-12 .product-image {
+          height: 90px !important;
         }
       `
     }
   ];
 
   try {
+    // Delete unwanted templates
+    try {
+      await dbService.deleteTemplate("festive_gold_cream");
+      await dbService.deleteTemplate("minimal_glass_dark");
+      await dbService.deleteTemplate("neo_brutalist_cyber");
+      await dbService.deleteTemplate("dynamic_firebase_template");
+    } catch (e) {
+      console.error("Unwanted template deletion failed:", e);
+    }
+
     for (const t of templatesToSeed) {
       await dbService.createTemplate(t);
     }

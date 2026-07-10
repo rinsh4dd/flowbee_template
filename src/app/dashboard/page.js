@@ -86,6 +86,20 @@ function TemplateCardPreview({ template }) {
         whatsapp: "Loremipsum",
         themeColor: "#e2231a"
       };
+    } else if (template.id === "grocers_ledger") {
+      mockCamp = {
+        ...mockCamp,
+        companyName: "Demo Store",
+        campaignTitle: "September",
+        headerTitle: "Special Offers",
+        headerSubtitle: "Curated savings on everyday essentials",
+        headerBadgeText: "70% OFF",
+        phone: "0123 456 7890",
+        whatsapp: "+91 98765 43210",
+        footerAddress: "Demo Store · MG Road, Calicut, Kerala",
+        terms: "VAT Inclusive · Prices valid while stocks last",
+        themeColor: "#1f3a2e"
+      };
     }
 
     const mockProds = [

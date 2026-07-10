@@ -111,12 +111,16 @@ export function calculatePagesCount(campaign, products = [], customTemplate = nu
       ? 9
       : templateId === "supermarket_flyer_yellow"
       ? 16
+      : templateId === "grocers_ledger"
+      ? 12
       : parseInt(campaign.productsPerPage) || template.defaultProductsPerPage;
   const subsequentPageLimit =
     templateId === "red_big_deals"
       ? 9
       : templateId === "supermarket_flyer_yellow"
       ? 16
+      : templateId === "grocers_ledger"
+      ? 12
       : parseInt(campaign.productsPerPageSubsequent) ||
         (templateId === "wefive_tuesday_market"
           ? firstPageLimit + 5
@@ -158,12 +162,16 @@ export function generateBrochureHtml(campaign, products = [], customTemplate = n
       ? 9
       : templateId === "supermarket_flyer_yellow"
       ? 16
+      : templateId === "grocers_ledger"
+      ? 12
       : parseInt(campaign.productsPerPage) || template.defaultProductsPerPage;
   const subsequentPageLimit =
     templateId === "red_big_deals"
       ? 9
       : templateId === "supermarket_flyer_yellow"
       ? 16
+      : templateId === "grocers_ledger"
+      ? 12
       : parseInt(campaign.productsPerPageSubsequent) ||
         (templateId === "wefive_tuesday_market"
           ? firstPageLimit + 5

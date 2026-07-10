@@ -760,6 +760,431 @@ export async function seedDynamicTemplate() {
           height: 90px !important;
         }
       `
+    },
+    {
+      id: "grocers_ledger",
+      name: "📜 The Grocer's Ledger",
+      type: "offer_brochure",
+      status: "active",
+      brochurePages: 2,
+      description: "Classic vintage catalog template with elegant Fraunces serif headers, forest green accents, thin borders, and structured ledger grids.",
+      defaultProductsPerPage: 12,
+      headerHtml: `
+        <div class="flyer-header">
+          <div class="logo-block">
+            <div class="logo-circle">
+              {{#logoUrl}}<img src="{{logoUrl}}" alt="{{companyName}}">{{/logoUrl}}
+            </div>
+            <div class="company-name">{{companyName}}</div>
+          </div>
+
+          <div class="header-badge"><span>{{#headerBadgeText}}{{headerBadgeText}}{{/headerBadgeText}}{{^headerBadgeText}}70%<br>OFF{{/headerBadgeText}}</span></div>
+
+          <div class="campaign-title">{{campaignTitle}}</div>
+          <div class="header-title">{{headerTitle}}</div>
+          <div class="header-subtitle">{{headerSubtitle}}</div>
+        </div>
+        <div class="offer-dates">Valid {{offerStartDate}} – {{offerEndDate}}</div>
+      `,
+      productCardHtml: `
+        <div class="product-card">
+          {{#badgeText}}
+          <div class="badge-ribbon">{{badgeText}}</div>
+          {{/badgeText}}
+          <div class="product-image"><img src="{{imageUrl}}" alt="{{productName}}"></div>
+          <div class="card-rule"></div>
+          <div class="product-name">{{productName}}</div>
+          <div class="product-quantity">{{quantity}}</div>
+          <div class="price-row">
+            {{#oldPrice}}<span class="old-price">{{currency}} {{formattedOldPrice}}</span>{{/oldPrice}}
+            <span class="offer-price"><span class="currency">{{currency}}</span>{{formattedOfferPrice}}</span>
+          </div>
+        </div>
+      `,
+      footerHtml: `
+        <div class="flyer-footer">
+          <div class="footer-row">
+            <div class="footer-contact">
+              <div class="item">
+                <span class="label">Call</span>
+                <span class="value">{{phone}}</span>
+              </div>
+              <div class="item">
+                <span class="label">WhatsApp</span>
+                <span class="value">{{whatsapp}}</span>
+              </div>
+            </div>
+            <div class="qr-block">
+              <img src="{{qrCodeSrc}}" alt="Scan to WhatsApp">
+            </div>
+          </div>
+          <div class="footer-address">{{footerAddress}}</div>
+          <div class="terms-bar">{{terms}}</div>
+        </div>
+      `,
+      css: `
+        .page-container {
+          background: #faf7f0 !important;
+          color: #1b1b18 !important;
+          font-family: 'Inter', sans-serif;
+        }
+        .flyer-header {
+          position: relative;
+          background: #1f3a2e;
+          padding: 40px 32px 30px;
+          text-align: center;
+          overflow: visible;
+        }
+        .flyer-header::after {
+          content: "";
+          position: absolute;
+          left: 32px;
+          right: 32px;
+          bottom: 12px;
+          height: 1px;
+          background: rgba(216, 189, 142, 0.35);
+        }
+        .logo-block {
+          position: absolute;
+          top: -30px;
+          left: 32px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          width: 90px;
+          z-index: 20;
+        }
+        .logo-block .logo-circle {
+          width: 76px;
+          height: 76px;
+          border-radius: 50%;
+          background: #f4efe4;
+          border: 2px solid #b8925a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+        }
+        .logo-block img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          padding: 0px;
+        }
+        .logo-block .company-name {
+          font-family: 'Inter', sans-serif;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 1.2px;
+          text-transform: uppercase;
+          color: #14261e;
+          background: #d8bd8e;
+          padding: 3px 10px;
+          border-radius: 2px;
+          white-space: nowrap;
+        }
+        .campaign-title {
+          font-family: 'Fraunces', serif;
+          font-weight: 600;
+          font-size: 42px;
+          color: #f4efe4;
+          letter-spacing: 0.5px;
+          line-height: 1;
+          margin-top: 8px;
+          text-transform: capitalize;
+        }
+        .header-title {
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+          color: #d8bd8e;
+          margin-top: 10px;
+        }
+        .header-subtitle {
+          font-family: 'Fraunces', serif;
+          font-style: italic;
+          font-size: 16px;
+          color: rgba(244, 239, 228, 0.75);
+          margin-top: 8px;
+        }
+        .header-badge {
+          position: absolute;
+          top: -25px;
+          right: 32px;
+          width: 96px;
+          height: 96px;
+          border-radius: 50%;
+          background: #faf7f0;
+          border: 2px solid #b8925a;
+          box-shadow: 0 0 0 5px #1f3a2e, 0 5px 12px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          transform: rotate(-6deg);
+          z-index: 20;
+        }
+        .header-badge span {
+          font-family: 'Fraunces', serif;
+          font-weight: 700;
+          font-size: 18px;
+          color: #a63d2f;
+          line-height: 1.15;
+        }
+        .offer-dates {
+          text-align: center;
+          font-size: 13px;
+          font-weight: 500;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          color: rgba(27, 27, 24, 0.55);
+          padding: 16px 0 6px;
+          background: #faf7f0;
+        }
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr) !important;
+          padding: 12px 24px 24px !important;
+          background: #faf7f0 !important;
+          flex-grow: 1;
+          gap: 0px !important;
+        }
+        .product-card {
+          position: relative;
+          background: #faf7f0;
+          border: 1px solid rgba(27, 27, 24, 0.14);
+          padding: 16px 12px 14px;
+          text-align: center;
+          overflow: hidden;
+          margin: -0.5px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          height: 100%;
+        }
+        .badge-ribbon {
+          position: absolute;
+          top: 15px;
+          right: -32px;
+          width: 120px;
+          transform: rotate(40deg);
+          background: #a63d2f;
+          color: #f4efe4;
+          font-family: 'Inter', sans-serif;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          text-align: center;
+          padding: 4px 0;
+          z-index: 5;
+        }
+        .product-image {
+          width: 100%;
+          height: 90px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 10px;
+        }
+        .product-image img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+        .card-rule {
+          width: 30px;
+          height: 1.5px;
+          background: #b8925a;
+          margin: 0 auto 10px;
+        }
+        .product-name {
+          font-family: 'Fraunces', serif;
+          font-weight: 500;
+          font-size: 14px;
+          color: #1b1b18;
+          line-height: 1.25;
+          min-height: 36px;
+        }
+        .product-quantity {
+          font-family: 'Inter', sans-serif;
+          font-size: 10px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          color: rgba(27, 27, 24, 0.45);
+          margin-top: 4px;
+          margin-bottom: 12px;
+        }
+        .price-row {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+        }
+        .old-price {
+          font-family: 'Fraunces', serif;
+          font-style: italic;
+          font-size: 12px;
+          color: rgba(27, 27, 24, 0.4);
+          text-decoration: line-through;
+        }
+        .offer-price {
+          font-family: 'IBM Plex Mono', monospace;
+          font-weight: 600;
+          font-size: 18px;
+          color: #1f3a2e;
+        }
+        .offer-price .currency {
+          font-size: 11px;
+          font-weight: 500;
+          vertical-align: super;
+          margin-right: 1px;
+          color: #a63d2f;
+        }
+        .flyer-footer {
+          background: #1f3a2e;
+          padding: 24px 32px 0;
+          display: flex;
+          flex-direction: column;
+        }
+        .footer-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid rgba(216, 189, 142, 0.3);
+        }
+        .footer-contact {
+          display: flex;
+          gap: 30px;
+        }
+        .footer-contact .item {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+        .footer-contact .label {
+          font-family: 'Inter', sans-serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: #d8bd8e;
+        }
+        .footer-contact .value {
+          font-family: 'IBM Plex Mono', monospace;
+          font-size: 15px;
+          font-weight: 600;
+          color: #f4efe4;
+        }
+        .qr-block {
+          width: 70px;
+          height: 70px;
+          background: #f4efe4;
+          padding: 5px;
+          border: 1px solid #b8925a;
+          flex-shrink: 0;
+        }
+        .qr-block img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+        .footer-address {
+          text-align: center;
+          font-family: 'Inter', sans-serif;
+          font-size: 12px;
+          letter-spacing: 0.5px;
+          color: rgba(244, 239, 228, 0.65);
+          padding: 15px 0;
+        }
+        .terms-bar {
+          background: #14261e;
+          margin: 0 -32px;
+          padding: 10px 32px;
+          text-align: center;
+          font-family: 'Inter', sans-serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: #d8bd8e;
+        }
+
+        /* Dynamic count classes to prevent low item stretching */
+        .grid-container.count-1,
+        .grid-container.count-2,
+        .grid-container.count-3,
+        .grid-container.count-4 {
+          grid-template-columns: repeat(2, 1fr) !important;
+          align-content: start !important;
+          gap: 20px !important;
+          padding: 30px !important;
+        }
+        .grid-container.count-1 {
+          grid-template-columns: 1fr !important;
+          max-width: 280px;
+          margin: 0 auto;
+        }
+        .grid-container.count-1 .product-card,
+        .grid-container.count-2 .product-card,
+        .grid-container.count-3 .product-card,
+        .grid-container.count-4 .product-card {
+          height: 240px !important;
+        }
+        .grid-container.count-1 .product-image,
+        .grid-container.count-2 .product-image,
+        .grid-container.count-3 .product-image,
+        .grid-container.count-4 .product-image {
+          height: 140px !important;
+        }
+
+        .grid-container.count-5,
+        .grid-container.count-6,
+        .grid-container.count-7,
+        .grid-container.count-8 {
+          grid-template-columns: repeat(3, 1fr) !important;
+          align-content: start !important;
+          gap: 16px !important;
+        }
+        .grid-container.count-5 .product-card,
+        .grid-container.count-6 .product-card,
+        .grid-container.count-7 .product-card,
+        .grid-container.count-8 .product-card {
+          height: 190px !important;
+        }
+        .grid-container.count-5 .product-image,
+        .grid-container.count-6 .product-image,
+        .grid-container.count-7 .product-image,
+        .grid-container.count-8 .product-image {
+          height: 100px !important;
+        }
+
+        .grid-container.count-9,
+        .grid-container.count-10,
+        .grid-container.count-11,
+        .grid-container.count-12 {
+          grid-template-columns: repeat(3, 1fr) !important;
+          align-content: start !important;
+        }
+        .grid-container.count-9 .product-card,
+        .grid-container.count-10 .product-card,
+        .grid-container.count-11 .product-card,
+        .grid-container.count-12 .product-card {
+          height: 180px !important;
+        }
+        .grid-container.count-9 .product-image,
+        .grid-container.count-10 .product-image,
+        .grid-container.count-11 .product-image,
+        .grid-container.count-12 .product-image {
+          height: 90px !important;
+        }
+      `
     }
   ];
 
